@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+
+  <title>SciTrack - Science Student Lab Hub</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-5xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-rose-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-rose-500/20">
+          ⚗️
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            SciTrack <span class="text-xs px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800/60 font-mono-code">Step 6: Complete Lab Suite</span>
+          </h1>
+          <p class="text-xs text-slate-400">Research & Lab Assistant for Science Students</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 text-xs font-mono-code">
+        <!-- Floating Active Bench Timer Indicator -->
+        <div id="header-timer-pill" class="hidden items-center gap-2 bg-indigo-950/80 border border-indigo-700/80 px-3 py-1.5 rounded-lg text-indigo-300">
+          <span class="inline-block w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
+          <span>Bench Timer: <strong id="header-timer-display" class="text-white">00:00</strong></span>
+        </div>
+
+        <div class="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="stat-pending" class="text-slate-300">0 tasks remaining</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation / Module tabs -->
+    <div class="max-w-5xl mx-auto px-4 overflow-x-auto">
+      <nav class="flex gap-1 border-t border-slate-800/60 pt-2 pb-2 text-xs font-medium">
+        <button id="nav-tasks" class="tab-btn px-3 py-1.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 whitespace-nowrap">
+          <span>📋</span> Lab Tasks
+        </button>
+        <button id="nav-notebook" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 flex items-center gap-1.5 whitespace-nowrap">
+          <span>📓</span> Lab Notebook <span class="text-[10px] bg-slate-800 text-cyan-400 px-1.5 py-0.2 rounded border border-cyan-900">Step 2</span>
+        </button>
+        <button id="nav-protocols" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 flex items-center gap-1.5 whitespace-nowrap">
+          <span>📑</span> Protocols <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded">Upcoming</span>
+        </button>
+        <button id="nav-recipes" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 flex items-center gap-1.5 whitespace-nowrap">
+          <span>🧪</span> Solutions & Recipes <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded">Upcoming</span>
+        </button>
+        <button id="nav-calc" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 flex items-center gap-1.5 whitespace-nowrap">
+          <span>🔢</span> Science Calc <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded">Upcoming</span>
+        </button>
+        <button id="nav-failures" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 flex items-center gap-1.5 whitespace-nowrap">
+          <span>💥</span> Failed Exp. Log <span class="text-[10px] bg-rose-950 text-rose-400 border border-rose-800/80 px-1.5 py-0.2 rounded font-mono-code">NEW</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- VIEW 1: Lab Tasks View -->
+    <div id="view-tasks" class="space-y-6">
+      
+      <!-- Metrics Overview -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5">
+          <div class="text-xs text-slate-400 mb-1">Total Bench Tasks</div>
+          <div id="stat-total" class="text-2xl font-bold font-mono-code text-white">0</div>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5">
+          <div class="text-xs text-amber-400/90 mb-1">Active / Pending</div>
+          <div id="stat-active" class="text-2xl font-bold font-mono-code text-amber-400">0</div>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5">
+          <div class="text-xs text-emerald-400/90 mb-1">Completed Steps</div>
+          <div id="stat-completed" class="text-2xl font-bold font-mono-code text-emerald-400">0</div>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5">
+          <div class="text-xs text-cyan-400/90 mb-1">Completion Rate</div>
+          <div id="stat-rate" class="text-2xl font-bold font-mono-code text-cyan-400">0%</div>
+        </div>
+      </div>
+
+      <!-- Add Task Card Form -->
+      <section class="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400"></div>
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+          <span>➕</span> Add New Lab Task or Experiment Action
+        </h2>
+        
+        <form id="task-form" class="space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div class="md:col-span-6">
+              <label for="task-title" class="block text-xs font-medium text-slate-300 mb-1">Task / Procedure</label>
+              <input 
+                type="text" 
+                id="task-title" 
+                placeholder="e.g. Autoclave 500mL LB Broth & prepare 10% SDS gel" 
+                class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                required
+              >
+            </div>
+
+            <div class="md:col-span-3">
+              <label for="task-category" class="block text-xs font-medium text-slate-300 mb-1">Lab Category</label>
+              <select 
+                id="task-category" 
+                class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition"
+              >
+                <option value="Benchwork">🧪 Benchwork / Exp</option>
+                <option value="Protocol">📑 Protocol Prep</option>
+                <option value="Solution">🧴 Solution / Buffer</option>
+                <option value="Analysis">📊 Data Analysis</option>
+                <option value="Notebook">📓 Lab Notebook Log</option>
+                <option value="Maintenance">🧰 Lab Cleaning / Calib</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-3">
+              <label for="task-priority" class="block text-xs font-medium text-slate-300 mb-1">Priority</label>
+              <select 
+                id="task-priority" 
+                class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition"
+              >
+                <option value="High">🔴 Critical / Time-sensitive</option>
+                <option value="Medium" selected>🟡 Normal / Regular</option>
+                <option value="Low">🟢 Low / Background</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <div class="flex items-center gap-2">
+              <label for="task-due" class="text-xs text-slate-400">Time / Note:</label>
+              <input 
+                type="text" 
+                id="task-due" 
+                placeholder="e.g. 2:00 PM or Bench 3" 
+                class="bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              >
+            </div>
+
+            <button 
+              type="submit" 
+              class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold px-4 py-2 rounded-xl text-sm transition flex items-center gap-2 shadow-lg shadow-cyan-500/20 active:scale-95"
+            >
+              <span>Add to Lab Queue</span> 🚀
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Task List Filter & Container -->
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+            <button id="filter-all" class="filter-btn px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-medium">All</button>
+            <button id="filter-active" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800">Active</button>
+            <button id="filter-completed" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800">Completed</button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Category:</span>
+            <select id="filter-category" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-300 focus:outline-none">
+              <option value="All">All Categories</option>
+              <option value="Benchwork">🧪 Benchwork</option>
+              <option value="Protocol">📑 Protocol</option>
+              <option value="Solution">🧴 Solution</option>
+              <option value="Analysis">📊 Analysis</option>
+              <option value="Notebook">📓 Notebook</option>
+              <option value="Maintenance">🧰 Maintenance</option>
+            </select>
+            <button id="btn-clear-done" class="text-xs text-slate-400 hover:text-rose-400 px-2 py-1 transition border border-transparent hover:border-slate-800 rounded-lg">
+              Clear Done
+            </button>
+          </div>
+        </div>
+
+        <div id="task-list" class="space-y-2.5"></div>
+
+        <div id="empty-state" class="hidden text-center py-12 px-4 border border-dashed border-slate-800 rounded-2xl bg-slate-950/30">
+          <div class="text-3xl mb-2">🎉</div>
+          <h3 class="text-sm font-semibold text-slate-300">No tasks in this view</h3>
+          <p class="text-xs text-slate-500 mt-1">Add a procedure above or adjust your category filter.</p>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- VIEW 2: Personalized Lab Notebook View -->
+    <div id="view-notebook" class="hidden space-y-6">
+
+      <!-- Personalized Student / Lab Profile Card -->
+      <section class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-500"></div>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-2xl shadow-inner">🔬</div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 id="profile-display-name" class="text-base font-bold text-white tracking-tight">Student Researcher</h2>
+                <span class="text-[10px] font-mono-code px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">Verified Notebook</span>
+              </div>
+              <p id="profile-display-lab" class="text-xs text-slate-400 mt-0.5">Biochemistry & Molecular Biology Lab • Bench Station 04</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="btn-edit-profile" class="text-xs px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white transition flex items-center gap-1.5">
+              <span>✏️</span> Edit Researcher Info
+            </button>
+            <div class="text-xs font-mono-code px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-cyan-400" id="notebook-entry-count">2 Entries Logged</div>
+          </div>
+        </div>
+
+        <div id="profile-edit-panel" class="hidden mt-4 pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="input-profile-name" class="block text-xs text-slate-400 mb-1">Your Name / Title</label>
+            <input type="text" id="input-profile-name" value="Student Researcher" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500">
+          </div>
+          <div>
+            <label for="input-profile-lab" class="block text-xs text-slate-400 mb-1">Laboratory / Course / Bench</label>
+            <input type="text" id="input-profile-lab" value="Biochemistry & Molecular Biology Lab • Bench Station 04" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500">
+          </div>
+          <div class="sm:col-span-2 flex justify-end gap-2">
+            <button id="btn-save-profile" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold px-3 py-1.5 rounded-lg text-xs transition">Save Profile</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- New Notebook Entry Form -->
+      <section class="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2"><span>📝</span> Record New Lab Notebook Entry</h3>
+
+        <form id="notebook-form" class="space-y-3.5">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div class="md:col-span-8">
+              <label for="note-title" class="block text-xs font-medium text-slate-300 mb-1">Experiment Title / Objective</label>
+              <input type="text" id="note-title" placeholder="e.g. Absorbance Spectrum of Chlorophyll A & B Extracts" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition" required>
+            </div>
+            <div class="md:col-span-4">
+              <label for="note-discipline" class="block text-xs font-medium text-slate-300 mb-1">Scientific Field</label>
+              <select id="note-discipline" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                <option value="Molecular Bio">🧬 Molecular Biology</option>
+                <option value="Biochemistry">🧪 Biochemistry / Chemistry</option>
+                <option value="Microbiology">🧫 Microbiology</option>
+                <option value="Cell Bio">🔬 Cell Biology / Microscopy</option>
+                <option value="Physiology">🩺 Physiology / Anatomy</option>
+                <option value="Data / Stats">📊 Computational / Data</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="note-hypothesis" class="block text-xs font-medium text-slate-300 mb-1">Hypothesis / Expected Outcome</label>
+            <input type="text" id="note-hypothesis" placeholder="e.g. Absorbance peaks expected at 430 nm and 662 nm for Chlorophyll A in 80% acetone" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="note-content" class="block text-xs font-medium text-slate-300">Procedure, Data Values & Observations</label>
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] text-slate-500 mr-1 hidden sm:inline">Quick Insert:</span>
+                <button type="button" class="btn-insert-symbol text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700" data-sym="°C">°C</button>
+                <button type="button" class="btn-insert-symbol text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700" data-sym="µL">µL</button>
+                <button type="button" class="btn-insert-symbol text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700" data-sym="mL">mL</button>
+                <button type="button" class="btn-insert-symbol text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700" data-sym="OD₆₀₀">OD₆₀₀</button>
+                <button type="button" class="btn-insert-symbol text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700" data-sym="pH ">pH</button>
+                <button type="button" class="btn-insert-symbol text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700" data-sym=" rpm">rpm</button>
+                <button type="button" class="btn-insert-symbol text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700" data-sym="λ=">λ=</button>
+              </div>
+            </div>
+            <textarea id="note-content" rows="4" placeholder="Record step timestamps, reagent volumes, incubation times, spectrophotometer readings, and qualitative observations..." class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition leading-relaxed font-mono-code" required></textarea>
+          </div>
+
+          <div>
+            <label for="note-conclusion" class="block text-xs font-medium text-slate-300 mb-1">Conclusions / Next Lab Steps</label>
+            <input type="text" id="note-conclusion" placeholder="e.g. Standard curve generated with R² = 0.998. Ready for unknown sample quantification tomorrow." class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-[11px] text-slate-500">Auto-timestamps with local time & researcher signature</span>
+            <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95"><span>Save Notebook Entry</span> 📓</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Notebook Entries Filter & Feed -->
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-1 max-w-sm">
+            <span class="text-xs text-slate-400">Search:</span>
+            <input type="text" id="search-notes" placeholder="Filter by title, hypothesis, or notes..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Discipline:</span>
+            <select id="filter-discipline" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-300 focus:outline-none">
+              <option value="All">All Disciplines</option>
+              <option value="Molecular Bio">🧬 Molecular Bio</option>
+              <option value="Biochemistry">🧪 Biochemistry</option>
+              <option value="Microbiology">🧫 Microbiology</option>
+              <option value="Cell Bio">🔬 Cell Bio</option>
+              <option value="Physiology">🩺 Physiology</option>
+              <option value="Data / Stats">📊 Data / Stats</option>
+            </select>
+          </div>
+        </div>
+        <div id="notebook-list" class="space-y-4"></div>
+        <div id="notebook-empty-state" class="hidden text-center py-12 px-4 border border-dashed border-slate-800 rounded-2xl bg-slate-950/30">
+          <div class="text-3xl mb-2">📖</div>
+          <h3 class="text-sm font-semibold text-slate-300">No notebook entries match your search</h3>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- VIEW 3: Step-by-Step Protocol Notebook View -->
+    <div id="view-protocols" class="hidden space-y-6">
+      <section class="bg-slate-950/80 border border-indigo-900/60 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span id="active-proto-badge" class="text-[10px] font-mono-code px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-800/80">Active Protocol Run</span>
+              <span id="active-proto-time" class="text-xs text-slate-400 font-mono-code">Est: ~45 mins</span>
+            </div>
+            <h3 id="active-proto-title" class="text-lg font-bold text-white tracking-tight">PCR Reaction & Thermocycling Protocol</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-reset-protocol" class="text-xs px-3 py-1.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 transition">🔄 Reset Checkmarks</button>
+            <button id="btn-log-protocol-done" class="text-xs px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-lg shadow-indigo-600/20">📓 Log to Notebook</button>
+          </div>
+        </div>
+        <div class="my-4 space-y-1.5">
+          <div class="flex justify-between text-xs font-mono-code text-slate-400">
+            <span>Protocol Progress: <strong id="proto-progress-text" class="text-indigo-400">0 of 5 steps completed</strong></span>
+            <span id="proto-progress-pct" class="font-bold text-indigo-300">0%</span>
+          </div>
+          <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+            <div id="proto-progress-bar" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+        <div id="proto-steps-container" class="space-y-3"></div>
+      </section>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-7 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2"><span>📚</span> Standard Protocol Library</h4>
+            <span class="text-xs text-slate-500" id="proto-library-count">3 SOPs Available</span>
+          </div>
+          <div id="protocol-library-list" class="space-y-3"></div>
+        </div>
+        <div class="md:col-span-5">
+          <section class="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3.5">
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2"><span>➕</span> Add New Protocol (SOP)</h4>
+            <form id="new-protocol-form" class="space-y-3">
+              <div>
+                <label for="custom-proto-title" class="block text-xs font-medium text-slate-300 mb-1">Protocol Name</label>
+                <input type="text" id="custom-proto-title" placeholder="e.g. Western Blot Blocking" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" required>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="custom-proto-field" class="block text-xs font-medium text-slate-300 mb-1">Discipline</label>
+                  <select id="custom-proto-field" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+                    <option value="Molecular Bio">🧬 Molecular Bio</option>
+                    <option value="Biochemistry">🧪 Biochemistry</option>
+                    <option value="Microbiology">🧫 Microbiology</option>
+                    <option value="Cell Bio">🔬 Cell Bio</option>
+                    <option value="General">🔬 General Lab</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="custom-proto-time" class="block text-xs font-medium text-slate-300 mb-1">Est. Duration</label>
+                  <input type="text" id="custom-proto-time" placeholder="e.g. 1.5 hrs" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+              </div>
+              <div>
+                <label for="custom-proto-steps" class="block text-xs font-medium text-slate-300 mb-1">Steps (One per line)</label>
+                <textarea id="custom-proto-steps" rows="5" placeholder="Thaw buffer on ice&#10;Denature at 95°C [3m]&#10;Centrifuge [5m]" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono-code leading-relaxed" required></textarea>
+              </div>
+              <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20">Save Protocol to Library 📚</button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: Solutions & Reagent Recipe Book View -->
+    <div id="view-recipes" class="hidden space-y-6">
+      <section class="bg-slate-950/80 border border-cyan-900/60 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-400"></div>
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span id="active-recipe-storage" class="text-[10px] font-mono-code px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/80">Store: Room Temp</span>
+              <span id="active-recipe-ph" class="text-xs text-slate-400 font-mono-code">pH: 7.40</span>
+            </div>
+            <h3 id="active-recipe-title" class="text-lg font-bold text-white tracking-tight">10X Phosphate-Buffered Saline (PBS)</h3>
+            <p id="active-recipe-desc" class="text-xs text-slate-400">Standard isotonic buffer stock for cell washes and antibody dilutions.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-copy-recipe" class="text-xs px-3 py-1.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 transition">📋 Copy Recipe</button>
+            <button id="btn-recipe-to-task" class="text-xs px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold transition shadow-lg shadow-cyan-500/20 flex items-center gap-1.5"><span>➕ Add to Lab Queue</span></button>
+          </div>
+        </div>
+        <div class="my-4 p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="text-xs font-semibold text-white flex items-center gap-1.5"><span>⚖️</span> Dynamic Batch Volume Scaler</div>
+            <p class="text-[11px] text-slate-400">Select or type desired batch size — ingredient masses calculate in real time.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 font-mono-code">Batch Volume:</span>
+            <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono-code">
+              <button class="btn-vol-preset px-2.5 py-1 rounded-lg text-slate-400 hover:text-white" data-vol="100">100 mL</button>
+              <button class="btn-vol-preset px-2.5 py-1 rounded-lg text-slate-400 hover:text-white" data-vol="250">250 mL</button>
+              <button class="btn-vol-preset px-2.5 py-1 rounded-lg text-slate-400 hover:text-white" data-vol="500">500 mL</button>
+              <button class="btn-vol-preset px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold" data-vol="1000">1.0 L</button>
+              <button class="btn-vol-preset px-2.5 py-1 rounded-lg text-slate-400 hover:text-white" data-vol="2000">2.0 L</button>
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" id="input-custom-volume" value="1000" min="10" max="50000" step="50" class="w-20 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-cyan-400 font-mono-code focus:outline-none focus:border-cyan-500">
+              <span class="text-xs text-slate-400">mL</span>
+            </div>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-900/90 text-slate-400 font-mono-code uppercase text-[10px] border-b border-slate-800">
+              <tr>
+                <th class="py-2.5 px-3.5">Reagent / Chemical</th>
+                <th class="py-2.5 px-3.5">Mol. Weight (MW)</th>
+                <th class="py-2.5 px-3.5">Target Concentration</th>
+                <th class="py-2.5 px-3.5">Base (1.0 L)</th>
+                <th class="py-2.5 px-3.5 text-right font-bold text-cyan-400">Mass to Weigh (<span id="table-vol-label">1000 mL</span>)</th>
+              </tr>
+            </thead>
+            <tbody id="recipe-ingredients-body" class="divide-y divide-slate-800/60 font-mono-code"></tbody>
+          </table>
+        </div>
+        <div class="mt-4 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-cyan-400 font-mono-code">Bench Preparation Instructions</div>
+          <p id="active-recipe-sop" class="text-xs text-slate-300 leading-relaxed font-mono-code whitespace-pre-wrap"></p>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-7 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2"><span>📖</span> Laboratory Recipe Book</h4>
+            <span class="text-xs text-slate-500" id="recipe-library-count">4 Recipes Saved</span>
+          </div>
+          <div id="recipe-library-list" class="space-y-3"></div>
+        </div>
+        <div class="md:col-span-5">
+          <section class="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3.5">
+            <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2"><span>➕</span> Add New Recipe to Book</h4>
+            <form id="new-recipe-form" class="space-y-3">
+              <div>
+                <label for="custom-rec-title" class="block text-xs font-medium text-slate-300 mb-1">Solution / Buffer Name</label>
+                <input type="text" id="custom-rec-title" placeholder="e.g. 5X SDS Loading Buffer" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500" required>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="custom-rec-ph" class="block text-xs font-medium text-slate-300 mb-1">Target pH</label>
+                  <input type="text" id="custom-rec-ph" placeholder="e.g. 6.8 or N/A" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                  <label for="custom-rec-storage" class="block text-xs font-medium text-slate-300 mb-1">Storage Condition</label>
+                  <select id="custom-rec-storage" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500">
+                    <option value="Room Temp (20-25°C)">Room Temp (20-25°C)</option>
+                    <option value="4°C Chilled">4°C Refrigerator</option>
+                    <option value="-20°C Freezer">-20°C Freezer</option>
+                    <option value="Dark / Light-sensitive">Dark / Foil wrap</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label for="custom-rec-ingredients" class="block text-xs font-medium text-slate-300 mb-1">Chemical Components (Base 1.0 L)</label>
+                <textarea id="custom-rec-ingredients" rows="4" placeholder="Tris Base | 121.14 g/mol | 250 mM | 30.28 g" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono-code leading-relaxed" required></textarea>
+              </div>
+              <div>
+                <label for="custom-rec-sop" class="block text-xs font-medium text-slate-300 mb-1">Preparation Instructions</label>
+                <textarea id="custom-rec-sop" rows="3" placeholder="Dissolve in 800 mL dH2O, adjust pH with HCl, bring to 1 L." class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono-code leading-relaxed"></textarea>
+              </div>
+              <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold py-2 rounded-xl text-xs transition shadow-lg shadow-cyan-500/20">Save Solution to Recipe Book 🧪</button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 5: Science & Dilution Calculator View -->
+    <div id="view-calc" class="hidden space-y-6">
+      <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-medium">
+        <button id="calc-tab-dilution" class="flex-1 py-2 px-3 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold transition flex items-center justify-center gap-1.5">
+          <span>💧</span> C₁V₁ = C₂V₂ Dilution Solver
+        </button>
+        <button id="calc-tab-molarity" class="flex-1 py-2 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition flex items-center justify-center gap-1.5">
+          <span>⚖️</span> Molarity & Mass Solver
+        </button>
+        <button id="calc-tab-converter" class="flex-1 py-2 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition flex items-center justify-center gap-1.5">
+          <span>🔄</span> Quick Unit Converters
+        </button>
+      </div>
+
+      <section id="calc-sub-dilution" class="bg-slate-950/80 border border-amber-900/60 rounded-2xl p-5 shadow-2xl relative overflow-hidden space-y-5">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500"></div>
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight flex items-center gap-2"><span>💧</span> Stock Dilution Formula: C₁ × V₁ = C₂ × V₂</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Calculate how much concentrated stock solution and diluent buffer to pipette.</p>
+          </div>
+          <span class="text-[10px] font-mono-code px-2 py-0.5 rounded-full bg-amber-950 text-amber-400 border border-amber-800/80">Active Bench Tool</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono-code flex items-center justify-between">
+              <span>Concentrated Stock (1)</span>
+              <span class="text-[10px] text-slate-500">Starting Material</span>
+            </div>
+            <div>
+              <label for="dil-c1" class="block text-xs font-medium text-slate-300 mb-1">Initial Stock Conc (C₁)</label>
+              <div class="flex gap-2">
+                <input type="number" id="dil-c1" value="10" step="any" min="0" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code focus:outline-none focus:border-amber-500">
+                <select id="dil-c1-unit" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-amber-300 font-mono-code">
+                  <option value="X">X (Stock)</option>
+                  <option value="M">M</option>
+                  <option value="mM" selected>mM</option>
+                  <option value="uM">µM</option>
+                  <option value="mg/mL">mg/mL</option>
+                  <option value="%">% (w/v)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label for="dil-v1" class="block text-xs font-medium text-slate-300 mb-1">Volume of Stock to Pipette (V₁) [Solve]</label>
+              <div class="flex gap-2">
+                <input type="text" id="dil-v1" readonly value="Calculated" class="flex-1 bg-slate-950 border border-amber-500/60 rounded-lg px-3 py-1.5 text-xs text-amber-300 font-mono-code font-bold">
+                <select id="dil-v1-unit" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 font-mono-code">
+                  <option value="uL" selected>µL</option>
+                  <option value="mL">mL</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-cyan-400 font-mono-code flex items-center justify-between">
+              <span>Target Working Solution (2)</span>
+              <span class="text-[10px] text-slate-500">Desired Outcome</span>
+            </div>
+            <div>
+              <label for="dil-c2" class="block text-xs font-medium text-slate-300 mb-1">Desired Working Conc (C₂)</label>
+              <div class="flex gap-2">
+                <input type="number" id="dil-c2" value="1" step="any" min="0" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code focus:outline-none focus:border-amber-500">
+                <select id="dil-c2-unit" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-cyan-300 font-mono-code">
+                  <option value="X">X (Stock)</option>
+                  <option value="M">M</option>
+                  <option value="mM" selected>mM</option>
+                  <option value="uM">µM</option>
+                  <option value="mg/mL">mg/mL</option>
+                  <option value="%">% (w/v)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label for="dil-v2" class="block text-xs font-medium text-slate-300 mb-1">Total Target Volume (V₂)</label>
+              <div class="flex gap-2">
+                <input type="number" id="dil-v2" value="500" step="any" min="0" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code focus:outline-none focus:border-amber-500">
+                <select id="dil-v2-unit" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 font-mono-code">
+                  <option value="uL" selected>µL</option>
+                  <option value="mL">mL</option>
+                  <option value="L">L</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-cyan-950/40 border border-amber-800/60 flex flex-wrap items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400 font-mono-code">Bench Pipetting Protocol</div>
+            <div id="dil-instruction-text" class="text-sm font-semibold text-white font-mono-code">Pipette 50.00 µL Stock into 450.00 µL Buffer / dH₂O (Total: 500.00 µL)</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-dil-copy" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 transition">📋 Copy</button>
+            <button id="btn-dil-to-task" class="text-xs px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold transition shadow-lg shadow-amber-500/20">➕ Add to Lab Queue</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="calc-sub-molarity" class="hidden bg-slate-950/80 border border-emerald-900/60 rounded-2xl p-5 shadow-2xl relative overflow-hidden space-y-5">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div>
+            <h3 class="text-base font-bold text-white tracking-tight flex items-center gap-2"><span>⚖️</span> Molarity to Mass Calculator: Mass = M × V × MW</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Calculate the exact mass in grams to weigh on an analytical balance for desired molarity.</p>
+          </div>
+          <span class="text-[10px] font-mono-code px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/80">Analytical Balance Helper</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <label for="mol-conc" class="block text-xs font-medium text-slate-300">Target Molarity (M)</label>
+            <div class="flex gap-2">
+              <input type="number" id="mol-conc" value="50" step="any" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code focus:outline-none focus:border-emerald-500">
+              <select id="mol-conc-unit" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-emerald-400 font-mono-code">
+                <option value="M">M</option>
+                <option value="mM" selected>mM</option>
+                <option value="uM">µM</option>
+              </select>
+            </div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <label for="mol-vol" class="block text-xs font-medium text-slate-300">Target Volume (V)</label>
+            <div class="flex gap-2">
+              <input type="number" id="mol-vol" value="500" step="any" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code focus:outline-none focus:border-emerald-500">
+              <select id="mol-vol-unit" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-cyan-400 font-mono-code">
+                <option value="mL" selected>mL</option>
+                <option value="L">L</option>
+                <option value="uL">µL</option>
+              </select>
+            </div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <label for="mol-mw" class="block text-xs font-medium text-slate-300">Molecular Weight (MW)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" id="mol-mw" value="121.14" step="any" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code focus:outline-none focus:border-emerald-500">
+              <span class="text-xs text-slate-400 font-mono-code whitespace-nowrap">g/mol</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="text-[11px] text-slate-500 mr-1">Quick MW Fill:</span>
+          <button class="btn-mw-fill text-[11px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono-code" data-mw="58.44" data-name="NaCl">NaCl (58.44)</button>
+          <button class="btn-mw-fill text-[11px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono-code" data-mw="121.14" data-name="Tris Base">Tris (121.14)</button>
+          <button class="btn-mw-fill text-[11px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono-code" data-mw="372.24" data-name="EDTA">EDTA (372.24)</button>
+          <button class="btn-mw-fill text-[11px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono-code" data-mw="74.55" data-name="KCl">KCl (74.55)</button>
+          <button class="btn-mw-fill text-[11px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono-code" data-mw="180.16" data-name="Glucose">D-Glucose (180.16)</button>
+        </div>
+        <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-teal-950/40 border border-emerald-800/60 flex flex-wrap items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 font-mono-code">Mass to Weigh on Balance</div>
+            <div id="mol-result-mass" class="text-2xl font-bold text-white font-mono-code">3.029 g <span class="text-sm font-normal text-slate-400">(3028.50 mg)</span></div>
+            <div id="mol-result-formula" class="text-xs text-slate-400 font-mono-code">= 0.050 mol/L × 0.500 L × 121.14 g/mol</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-mol-copy" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 transition">📋 Copy</button>
+            <button id="btn-mol-to-task" class="text-xs px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold transition shadow-lg shadow-emerald-500/20">➕ Add to Lab Queue</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="calc-sub-converter" class="hidden bg-slate-950/80 border border-purple-900/60 rounded-2xl p-5 shadow-2xl relative overflow-hidden space-y-5">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500"></div>
+        <div class="border-b border-slate-800/80 pb-3">
+          <h3 class="text-base font-bold text-white tracking-tight flex items-center gap-2"><span>🔄</span> Rapid Lab Unit Converters</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Instant two-way conversions for bench pipetting, concentration molarities, and DNA/protein yields.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-cyan-400 font-mono-code">Volume Converter</div>
+            <div>
+              <label for="conv-vol-ul" class="block text-[11px] text-slate-400 mb-1">Microliters (µL)</label>
+              <input type="number" id="conv-vol-ul" value="1000" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code">
+            </div>
+            <div>
+              <label for="conv-vol-ml" class="block text-[11px] text-slate-400 mb-1">Milliliters (mL)</label>
+              <input type="number" id="conv-vol-ml" value="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code">
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono-code">Molarity Converter</div>
+            <div>
+              <label for="conv-conc-mm" class="block text-[11px] text-slate-400 mb-1">Millimolar (mM)</label>
+              <input type="number" id="conv-conc-mm" value="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code">
+            </div>
+            <div>
+              <label for="conv-conc-um" class="block text-[11px] text-slate-400 mb-1">Micromolar (µM)</label>
+              <input type="number" id="conv-conc-um" value="1000" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code">
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-purple-400 font-mono-code">DNA / Protein Yield</div>
+            <div>
+              <label for="conv-yield-ng" class="block text-[11px] text-slate-400 mb-1">ng / µL (or µg / mL)</label>
+              <input type="number" id="conv-yield-ng" value="250" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code">
+            </div>
+            <div>
+              <label for="conv-yield-ug" class="block text-[11px] text-slate-400 mb-1">µg / µL (or mg / mL)</label>
+              <input type="number" id="conv-yield-ug" value="0.25" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code">
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- VIEW 6: Failed Experiment Log View (STEP 6) -->
+    <div id="view-failures" class="hidden space-y-6">
+
+      <!-- Scientific Philosophy Header Banner -->
+      <section class="bg-gradient-to-r from-rose-950/70 via-slate-950 to-orange-950/70 border border-rose-900/60 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-400"></div>
+
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-2xl shadow-inner">
+              💥
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-white tracking-tight">The Negative Results & Anomaly Log</h3>
+                <span class="text-[10px] font-mono-code px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800/80">Empirical Discovery</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">"Failed experiments are not lost time — they are the negative controls that prove what doesn't work."</p>
+            </div>
+          </div>
+
+          <div class="text-xs font-mono-code px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-rose-400" id="failure-log-count">
+            2 Anomalies Logged
+          </div>
+        </div>
+      </section>
+
+      <!-- Record New Failure Form -->
+      <section class="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden space-y-4">
+        <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+          <span>📝</span> Document Failed Run or Unexpected Result
+        </h4>
+
+        <form id="failure-form" class="space-y-3.5">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div class="md:col-span-8">
+              <label for="fail-title" class="block text-xs font-medium text-slate-300 mb-1">Experiment Name / Assay</label>
+              <input 
+                type="text" 
+                id="fail-title" 
+                placeholder="e.g. PCR Amplification of 16S rRNA gene (No bands visible)" 
+                class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" 
+                required
+              >
+            </div>
+
+            <div class="md:col-span-4">
+              <label for="fail-category" class="block text-xs font-medium text-slate-300 mb-1">Suspected Cause Category</label>
+              <select id="fail-category" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
+                <option value="Reagent">🧪 Reagent / Buffer Degradation</option>
+                <option value="Contamination">🧫 Contamination (Bacterial/RNase)</option>
+                <option value="Equipment">⚙️ Equipment / Temp Error</option>
+                <option value="Protocol">⏱️ Operator / Incubation Mistake</option>
+                <option value="Anomaly">❓ Unexpected Biological Anomaly</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="fail-expected" class="block text-xs font-medium text-slate-300 mb-1">Expected Outcome</label>
+              <input 
+                type="text" 
+                id="fail-expected" 
+                placeholder="e.g. Crisp 1500 bp band at 50 ng/µL on 1% agarose" 
+                class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+              >
+            </div>
+            <div>
+              <label for="fail-observed" class="block text-xs font-medium text-slate-300 mb-1">Actual Observed Result</label>
+              <input 
+                type="text" 
+                id="fail-observed" 
+                placeholder="e.g. Blank lane; faint primer-dimer smudge at ~50 bp only" 
+                class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500" 
+                required
+              >
+            </div>
+          </div>
+
+          <div>
+            <label for="fail-root-cause" class="block text-xs font-medium text-slate-300 mb-1">Root Cause Analysis & Hypothesized Reason</label>
+            <textarea 
+              id="fail-root-cause" 
+              rows="3" 
+              placeholder="What likely went wrong? (e.g. Annealing temp of 58°C was too high for new degenerate primer pair with Tm=52°C; dNTPs underwent multiple freeze-thaw cycles)." 
+              class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 font-mono-code leading-relaxed" 
+              required
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="fail-lesson" class="block text-xs font-medium text-slate-300 mb-1">Lessons Learned & Corrective Plan (Retry Action)</label>
+            <input 
+              type="text" 
+              id="fail-lesson" 
+              placeholder="e.g. Run thermal gradient (50°C-56°C) and use freshly thawed dNTP stock aliquot" 
+              class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+            >
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+              <input type="checkbox" id="fail-add-retry-task" class="rounded bg-slate-900 border-slate-700 text-rose-500 focus:ring-rose-500" checked>
+              <span>Automatically schedule corrected retry task in Lab Queue</span>
+            </label>
+
+            <button 
+              type="submit" 
+              class="bg-rose-500 hover:bg-rose-400 text-slate-950 font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-rose-500/20 active:scale-95"
+            >
+              <span>Record Failure & Lessons</span> 💥
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Failure Entries Feed -->
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-1 max-w-sm">
+            <span class="text-xs text-slate-400">Search:</span>
+            <input 
+              type="text" 
+              id="search-failures" 
+              placeholder="Search root causes, lessons, or assays..." 
+              class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-rose-500"
+            >
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Category:</span>
+            <select id="filter-fail-cat" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-300 focus:outline-none">
+              <option value="All">All Categories</option>
+              <option value="Reagent">🧪 Reagents</option>
+              <option value="Contamination">🧫 Contamination</option>
+              <option value="Equipment">⚙️ Equipment</option>
+              <option value="Protocol">⏱️ Protocol</option>
+              <option value="Anomaly">❓ Anomaly</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="failure-list" class="space-y-4">
+          <!-- Rendered via JS -->
+        </div>
+
+        <div id="failure-empty-state" class="hidden text-center py-12 px-4 border border-dashed border-slate-800 rounded-2xl bg-slate-950/30">
+          <div class="text-3xl mb-2">🛡️</div>
+          <h3 class="text-sm font-semibold text-slate-300">No failure logs match this search</h3>
+          <p class="text-xs text-slate-500 mt-1">Keep running protocols with high confidence!</p>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Notification Toast Container -->
+  <div id="toast" class="fixed bottom-4 right-4 bg-slate-800 border border-slate-700 text-slate-200 text-xs px-4 py-2.5 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-16 opacity-0 pointer-events-none flex items-center gap-2 z-50">
+    <span id="toast-icon">✨</span>
+    <span id="toast-msg">Task updated</span>
+  </div>
+
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-4 text-center text-xs text-slate-500">
+    SciTrack • Built for Science Students • Fully Functional Laboratory Assistant
+  </footer>
+
+  <script>
+    // Initial sample tasks
+    const DEFAULT_TASKS = [
+      {
+        id: 't-1',
+        title: 'Calibrate pH meter with pH 4.0 and 7.0 buffer standards',
+        category: 'Maintenance',
+        priority: 'High',
+        due: '9:00 AM',
+        completed: true,
+        createdAt: Date.now() - 3600000
+      },
+      {
+        id: 't-2',
+        title: 'Prepare 500 mL of 1X TAE electrophoresis running buffer',
+        category: 'Solution',
+        priority: 'High',
+        due: '10:30 AM',
+        completed: false,
+        createdAt: Date.now() - 1800000
+      },
+      {
+        id: 't-3',
+        title: 'Run Bradford protein assay & record absorbance at 595 nm',
+        category: 'Benchwork',
+        priority: 'Medium',
+        due: '1:00 PM',
+        completed: false,
+        createdAt: Date.now() - 900000
+      },
+      {
+        id: 't-4',
+        title: 'Log spectrophotometer standard curve in Lab Notebook',
+        category: 'Notebook',
+        priority: 'Low',
+        due: 'End of Day',
+        completed: false,
+        createdAt: Date.now()
+      }
+    ];
+
+    // Initial sample notebook entries
+    const DEFAULT_NOTES = [
+      {
+        id: 'note-1',
+        title: 'OD₆₀₀ Bacterial Growth Curve & IPTG Induction (E. coli BL21)',
+        discipline: 'Microbiology',
+        author: 'Student Researcher',
+        lab: 'Molecular Genetics Lab',
+        hypothesis: 'Culture will reach mid-log phase (OD₆₀₀ ~0.6) after ~2.5 hrs incubation at 37°C.',
+        content: '[10:00 AM] Inoculated 50 mL LB + 50 µg/mL Ampicillin with 1 mL overnight culture.\n[11:15 AM] OD₆₀₀ = 0.22 (lag phase exiting).\n[12:30 PM] OD₆₀₀ = 0.58 (mid-log reached).\n[12:35 PM] Induced with 0.5 mM IPTG (final conc). Transferred to 30°C shaker at 220 rpm for 4 hrs.',
+        conclusion: 'Induction started successfully at target optical density. Samples harvested at t=4h for SDS-PAGE.',
+        timestamp: new Date(Date.now() - 86400000).toLocaleString()
+      },
+      {
+        id: 'note-2',
+        title: 'Preparation & Titration of 50 mM Tris-HCl Buffer (pH 7.50)',
+        discipline: 'Biochemistry',
+        author: 'Student Researcher',
+        lab: 'Molecular Genetics Lab',
+        hypothesis: 'Target pH 7.50 achieved using 6.06 g Tris base dissolved in 800 mL dH₂O adjusted with ~42 mL 1M HCl.',
+        content: '[02:15 PM] Dissolved 6.057 g Tris base (MW = 121.14 g/mol) in 800 mL milli-Q water.\n[02:30 PM] Initial unadjusted pH = 10.42 at 22.5°C.\n[02:45 PM] Slowly titrated with 1.0 M HCl under constant magnetic stirring. Added 41.8 mL.\n[03:00 PM] Final stable pH = 7.50. Brought volume to exactly 1.00 L in volumetric flask.',
+        conclusion: 'Buffer prepared and autoclaved at 121°C for 20 min. Stored at room temperature.',
+        timestamp: new Date(Date.now() - 43200000).toLocaleString()
+      }
+    ];
+
+    // Initial sample protocol library
+    const DEFAULT_PROTOCOLS = [
+      {
+        id: 'p-1',
+        title: 'PCR Amplification & Thermocycling (Taq Polymerase)',
+        discipline: 'Molecular Bio',
+        timeEst: '~1.5 hrs',
+        steps: [
+          { text: 'Thaw 10X PCR Buffer, 10 mM dNTP mix, primers, and sterile dH₂O on ice. Invert Taq polymerase gently.', timerSeconds: 0, completed: false },
+          { text: 'Assemble master mix on ice: 5 µL 10X Buffer, 1 µL dNTPs (200 µM), 1 µL Forward Primer, 1 µL Reverse Primer, 0.25 µL Taq, 39.75 µL dH₂O.', timerSeconds: 0, completed: false },
+          { text: 'Add 2 µL DNA template to PCR tube (total reaction volume = 50 µL). Pulse-spin in microfuge.', timerSeconds: 15, completed: false },
+          { text: 'Initial Denaturation: Place tubes in thermocycler and heat at 95°C.', timerSeconds: 180, completed: false },
+          { text: 'Cycling Phase (30 cycles): 95°C 30s (denature), 55°C 30s (anneal), 72°C 60s (extension).', timerSeconds: 0, completed: false },
+          { text: 'Final Extension: Incubate at 72°C to complete full-length amplicons, then hold at 4°C.', timerSeconds: 300, completed: false }
+        ]
+      },
+      {
+        id: 'p-2',
+        title: 'SDS-PAGE Polyacrylamide Gel Electrophoresis',
+        discipline: 'Biochemistry',
+        timeEst: '~60 mins',
+        steps: [
+          { text: 'Mix 20 µL protein lysate with 5 µL 5X Laemmli SDS sample buffer containing DTT.', timerSeconds: 0, completed: false },
+          { text: 'Boil/heat samples in heat block at 95°C to denature secondary structures.', timerSeconds: 300, completed: false },
+          { text: 'Quick-spin tubes, load 5 µL protein ladder in lane 1, and 15 µL boiled sample in remaining wells.', timerSeconds: 0, completed: false },
+          { text: 'Fill electrophoresis chamber with 1X Tris-Glycine-SDS running buffer.', timerSeconds: 0, completed: false },
+          { text: 'Stacking Gel Run: Set power supply to 80V constant voltage until dye front enters resolving gel.', timerSeconds: 900, completed: false },
+          { text: 'Resolving Gel Run: Increase voltage to 120V constant until bromophenol blue reaches gel bottom.', timerSeconds: 2700, completed: false }
+        ]
+      },
+      {
+        id: 'p-3',
+        title: 'Plasmid DNA Alkaline Lysis Miniprep',
+        discipline: 'Molecular Bio',
+        timeEst: '~35 mins',
+        steps: [
+          { text: 'Pellet 3 mL overnight bacterial culture by centrifugation at 8,000 rpm.', timerSeconds: 180, completed: false },
+          { text: 'Discard supernatant, resuspend pellet completely in 250 µL chilled Buffer P1 with RNase A.', timerSeconds: 0, completed: false },
+          { text: 'Add 250 µL Buffer P2 (lysis), gently invert tube 6 times. DO NOT VORTEX.', timerSeconds: 180, completed: false },
+          { text: 'Add 350 µL Buffer N3 (neutralization), immediately invert tube 6-8 times until cloudy precipitate forms.', timerSeconds: 0, completed: false },
+          { text: 'Centrifuge at maximum speed (13,000 rpm) to pellet cellular debris and genomic DNA.', timerSeconds: 600, completed: false },
+          { text: 'Transfer clear supernatant into spin column, wash with Buffer PE (with ethanol), and elute in 50 µL sterile water.', timerSeconds: 60, completed: false }
+        ]
+      }
+    ];
+
+    // Initial sample reagent recipes
+    const DEFAULT_RECIPES = [
+      {
+        id: 'r-1',
+        title: '10X Phosphate-Buffered Saline (PBS)',
+        category: 'Buffer Stock',
+        ph: '7.40 ± 0.05',
+        storage: 'Room Temp (20-25°C)',
+        description: 'Standard isotonic biological buffer stock used for cell washing, ELISA, and western blot antibody dilutions.',
+        sop: '1. Dissolve reagents in 800 mL milli-Q water with magnetic stir bar.\n2. Adjust pH to 7.40 with HCl/NaOH.\n3. Bring to 1.00 L.\n4. Autoclave on liquid cycle for 20 min.',
+        ingredients: [
+          { name: 'Sodium Chloride (NaCl)', mw: '58.44 g/mol', conc: '1.37 M', baseGrams: 80.0, unit: 'g' },
+          { name: 'Potassium Chloride (KCl)', mw: '74.55 g/mol', conc: '27.0 mM', baseGrams: 2.0, unit: 'g' },
+          { name: 'Disodium Phosphate (Na₂HPO₄)', mw: '141.96 g/mol', conc: '100 mM', baseGrams: 14.4, unit: 'g' },
+          { name: 'Monopotassium Phosphate (KH₂PO₄)', mw: '136.09 g/mol', conc: '18.0 mM', baseGrams: 2.4, unit: 'g' }
+        ]
+      },
+      {
+        id: 'r-2',
+        title: '1.0 M Tris-HCl Buffer (pH 8.00)',
+        category: 'Core Buffer',
+        ph: '8.00 at 25°C',
+        storage: 'Room Temp (20-25°C)',
+        description: 'Fundamental primary buffer component for DNA extractions, enzyme assays, and electrophoresis.',
+        sop: '1. Dissolve 121.14 g of Tris base in ~800 mL distilled water.\n2. Carefully titrate with ~42 mL concentrated HCl.\n3. Bring final volume to 1.0 L.\n4. Autoclave at 121°C for 20 min.',
+        ingredients: [
+          { name: 'Tris Base', mw: '121.14 g/mol', conc: '1.00 M', baseGrams: 121.14, unit: 'g' },
+          { name: 'Concentrated HCl (12 M)', mw: '36.46 g/mol', conc: 'Titration', baseGrams: 42.0, unit: 'mL' }
+        ]
+      },
+      {
+        id: 'r-3',
+        title: '50X TAE Agarose Electrophoresis Buffer',
+        category: 'Electrophoresis',
+        ph: '8.30 ± 0.10',
+        storage: 'Room Temp (20-25°C)',
+        description: 'Concentrated running and gel casting buffer for separating double-stranded DNA in agarose gels.',
+        sop: '1. Dissolve Tris base and EDTA in 750 mL deionized water.\n2. Add glacial acetic acid.\n3. Bring final volume to 1.0 L. Dilute 1:50 with dH₂O to make working 1X TAE buffer.',
+        ingredients: [
+          { name: 'Tris Base', mw: '121.14 g/mol', conc: '2.00 M', baseGrams: 242.0, unit: 'g' },
+          { name: 'Glacial Acetic Acid (17.4 M)', mw: '60.05 g/mol', conc: '5.71% v/v', baseGrams: 57.1, unit: 'mL' },
+          { name: '0.5 M EDTA (pH 8.0)', mw: '372.24 g/mol', conc: '50.0 mM', baseGrams: 100.0, unit: 'mL' }
+        ]
+      },
+      {
+        id: 'r-4',
+        title: 'LB Liquid Medium (Luria-Bertani Broth)',
+        category: 'Microbiology Media',
+        ph: '7.00 ± 0.10',
+        storage: 'Room Temp (autoclaved) or 4°C',
+        description: 'Nutrient-rich liquid broth for standard cultivation and propagation of recombinant E. coli strains.',
+        sop: '1. Suspend powders in 900 mL distilled water.\n2. Stir thoroughly until dissolved.\n3. Adjust pH to 7.0 with 1.0 M NaOH.\n4. Bring to 1.0 L.\n5. Autoclave at 121°C for 20 minutes.',
+        ingredients: [
+          { name: 'Tryptone', mw: 'Complex Peptide', conc: '10.0 g/L (1.0% w/v)', baseGrams: 10.0, unit: 'g' },
+          { name: 'Yeast Extract', mw: 'Complex Vitamin Mix', conc: '5.0 g/L (0.5% w/v)', baseGrams: 5.0, unit: 'g' },
+          { name: 'Sodium Chloride (NaCl)', mw: '58.44 g/mol', conc: '171 mM (1.0% w/v)', baseGrams: 10.0, unit: 'g' }
+        ]
+      }
+    ];
+
+    // Initial sample failed experiment logs
+    const DEFAULT_FAILURES = [
+      {
+        id: 'fail-1',
+        title: 'Transformation of Chemically Competent DH5α with pUC19',
+        category: 'Equipment',
+        expected: '100-300 transformation colonies on LB + Ampicillin plate.',
+        observed: 'Zero colonies across test and positive control plates.',
+        rootCause: 'Water bath digital temperature display read 42°C, but manual thermometer measurement revealed actual bath temperature was 52.5°C. Excessive heat shocked and lysed competent cells.',
+        lesson: 'Always calibrate bench water bath temperature with an independent secondary thermometer prior to thawing competent cells.',
+        date: new Date(Date.now() - 172800000).toLocaleDateString()
+      },
+      {
+        id: 'fail-2',
+        title: 'SDS-PAGE of Recombinant GFP Cell Lysate',
+        category: 'Reagent',
+        expected: 'Sharp, distinct protein ladder separation and 27 kDa GFP band.',
+        observed: 'Smeary, distorted bands with high electrical resistance and boiling buffer.',
+        rootCause: '10X Tris-Glycine-SDS running buffer was accidentally poured directly into the chamber without performing 1:10 dilution in dH₂O.',
+        lesson: 'Double check dilution requirements on stock carboys before starting electrophoresis power supply.',
+        date: new Date(Date.now() - 86400000).toLocaleDateString()
+      }
+    ];
+
+    // State
+    let tasks = [];
+    let notes = [];
+    let protocols = [];
+    let recipes = [];
+    let failures = [];
+
+    let activeProtocolId = 'p-1';
+    let activeRecipeId = 'r-1';
+    let currentBatchVolume = 1000;
+
+    let currentFilter = 'all';
+    let currentCategoryFilter = 'All';
+    let currentNoteDisciplineFilter = 'All';
+    let currentNoteSearch = '';
+    let currentFailCategoryFilter = 'All';
+    let currentFailSearch = '';
+
+    // Active bench timer state
+    let benchTimerInterval = null;
+    let activeTimerStepIdx = null;
+    let activeTimerSecondsLeft = 0;
+
+    let userProfile = {
+      name: 'Student Researcher',
+      lab: 'Biochemistry & Molecular Biology Lab • Bench Station 04'
+    };
+
+    // Synthesized Audio chime
+    function playChime() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.8);
+      } catch (e) {
+        console.warn('Audio chime unavailable', e);
+      }
+    }
+
+    // Safe LocalStorage
+    function loadData() {
+      try {
+        const storedTasks = localStorage.getItem('scitrack_tasks');
+        tasks = storedTasks ? JSON.parse(storedTasks) : [...DEFAULT_TASKS];
+
+        const storedNotes = localStorage.getItem('scitrack_notes');
+        notes = storedNotes ? JSON.parse(storedNotes) : [...DEFAULT_NOTES];
+
+        const storedProtocols = localStorage.getItem('scitrack_protocols');
+        protocols = storedProtocols ? JSON.parse(storedProtocols) : [...DEFAULT_PROTOCOLS];
+
+        const storedRecipes = localStorage.getItem('scitrack_recipes');
+        recipes = storedRecipes ? JSON.parse(storedRecipes) : [...DEFAULT_RECIPES];
+
+        const storedFailures = localStorage.getItem('scitrack_failures');
+        failures = storedFailures ? JSON.parse(storedFailures) : [...DEFAULT_FAILURES];
+
+        const storedProfile = localStorage.getItem('scitrack_profile');
+        if (storedProfile) userProfile = JSON.parse(storedProfile);
+      } catch (e) {
+        console.warn('LocalStorage error, using defaults', e);
+        tasks = [...DEFAULT_TASKS];
+        notes = [...DEFAULT_NOTES];
+        protocols = [...DEFAULT_PROTOCOLS];
+        recipes = [...DEFAULT_RECIPES];
+        failures = [...DEFAULT_FAILURES];
+      }
+      applyProfileUI();
+    }
+
+    function saveTasks() { try { localStorage.setItem('scitrack_tasks', JSON.stringify(tasks)); } catch (e) {} }
+    function saveNotes() { try { localStorage.setItem('scitrack_notes', JSON.stringify(notes)); } catch (e) {} }
+    function saveProtocols() { try { localStorage.setItem('scitrack_protocols', JSON.stringify(protocols)); } catch (e) {} }
+    function saveRecipes() { try { localStorage.setItem('scitrack_recipes', JSON.stringify(recipes)); } catch (e) {} }
+    function saveFailures() { try { localStorage.setItem('scitrack_failures', JSON.stringify(failures)); } catch (e) {} }
+    function saveProfile() { try { localStorage.setItem('scitrack_profile', JSON.stringify(userProfile)); } catch (e) {} }
+
+    function applyProfileUI() {
+      document.getElementById('profile-display-name').textContent = userProfile.name;
+      document.getElementById('profile-display-lab').textContent = userProfile.lab;
+      document.getElementById('input-profile-name').value = userProfile.name;
+      document.getElementById('input-profile-lab').value = userProfile.lab;
+    }
+
+    // Toast helper
+    function showToast(msg, icon = '✨') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+      
+      toastMsg.textContent = msg;
+      toastIcon.textContent = icon;
+      
+      toast.classList.remove('translate-y-16', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-16', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2500);
+    }
+
+    // Helpers
+    function getCategoryBadge(category) {
+      const map = {
+        'Benchwork': { label: '🧪 Benchwork', bg: 'bg-emerald-950/80 text-emerald-400 border-emerald-800/60' },
+        'Protocol': { label: '📑 Protocol', bg: 'bg-indigo-950/80 text-indigo-400 border-indigo-800/60' },
+        'Solution': { label: '🧴 Solution', bg: 'bg-cyan-950/80 text-cyan-400 border-cyan-800/60' },
+        'Analysis': { label: '📊 Analysis', bg: 'bg-purple-950/80 text-purple-400 border-purple-800/60' },
+        'Notebook': { label: '📓 Notebook', bg: 'bg-amber-950/80 text-amber-400 border-amber-800/60' },
+        'Maintenance': { label: '🧰 Maintenance', bg: 'bg-slate-800 text-slate-300 border-slate-700' }
+      };
+      const c = map[category] || { label: category, bg: 'bg-slate-800 text-slate-300 border-slate-700' };
+      return `<span class="text-[11px] font-medium px-2 py-0.5 rounded-md border ${c.bg}">${c.label}</span>`;
+    }
+
+    function getPriorityBadge(priority) {
+      if (priority === 'High') return '<span class="text-[10px] font-mono-code font-semibold px-1.5 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-800/60">HIGH</span>';
+      if (priority === 'Medium') return '<span class="text-[10px] font-mono-code font-semibold px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-800/60">MED</span>';
+      return '<span class="text-[10px] font-mono-code font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">LOW</span>';
+    }
+
+    function getDisciplineBadge(discipline) {
+      const map = {
+        'Molecular Bio': 'bg-emerald-950/80 text-emerald-400 border-emerald-800/60',
+        'Biochemistry': 'bg-cyan-950/80 text-cyan-400 border-cyan-800/60',
+        'Microbiology': 'bg-amber-950/80 text-amber-400 border-amber-800/60',
+        'Cell Bio': 'bg-purple-950/80 text-purple-400 border-purple-800/60',
+        'Physiology': 'bg-rose-950/80 text-rose-400 border-rose-800/60',
+        'Data / Stats': 'bg-blue-950/80 text-blue-400 border-blue-800/60',
+        'General': 'bg-slate-800 text-slate-300 border-slate-700'
+      };
+      const bg = map[discipline] || 'bg-slate-800 text-slate-300 border-slate-700';
+      return `<span class="text-[11px] font-medium px-2 py-0.5 rounded-md border ${bg}">${escapeHtml(discipline)}</span>`;
+    }
+
+    function getFailureBadge(category) {
+      const map = {
+        'Reagent': { label: '🧪 Reagents', bg: 'bg-amber-950/80 text-amber-400 border-amber-800/60' },
+        'Contamination': { label: '🧫 Contamination', bg: 'bg-rose-950/80 text-rose-400 border-rose-800/60' },
+        'Equipment': { label: '⚙️ Equipment', bg: 'bg-indigo-950/80 text-indigo-400 border-indigo-800/60' },
+        'Protocol': { label: '⏱️ Protocol', bg: 'bg-purple-950/80 text-purple-400 border-purple-800/60' },
+        'Anomaly': { label: '❓ Anomaly', bg: 'bg-slate-800 text-slate-300 border-slate-700' }
+      };
+      const c = map[category] || { label: category, bg: 'bg-slate-800 text-slate-300 border-slate-700' };
+      return `<span class="text-[11px] font-medium px-2 py-0.5 rounded-md border ${c.bg}">${c.label}</span>`;
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+    }
+
+    // Render Stats
+    function updateStats() {
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.completed).length;
+      const active = total - completed;
+      const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-active').textContent = active;
+      document.getElementById('stat-completed').textContent = completed;
+      document.getElementById('stat-rate').textContent = `${rate}%`;
+      document.getElementById('stat-pending').textContent = `${active} tasks remaining`;
+      document.getElementById('notebook-entry-count').textContent = `${notes.length} Entries Logged`;
+      document.getElementById('proto-library-count').textContent = `${protocols.length} SOPs Available`;
+      document.getElementById('recipe-library-count').textContent = `${recipes.length} Recipes Saved`;
+      document.getElementById('failure-log-count').textContent = `${failures.length} Anomalies Logged`;
+    }
+
+    // Render Task List
+    function renderTasks() {
+      const listEl = document.getElementById('task-list');
+      const emptyStateEl = document.getElementById('empty-state');
+      
+      const filtered = tasks.filter(task => {
+        if (currentFilter === 'active' && task.completed) return false;
+        if (currentFilter === 'completed' && !task.completed) return false;
+        if (currentCategoryFilter !== 'All' && task.category !== currentCategoryFilter) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '';
+        emptyStateEl.classList.remove('hidden');
+      } else {
+        emptyStateEl.classList.add('hidden');
+        listEl.innerHTML = filtered.map(task => {
+          const isDone = task.completed;
+          return `
+            <div data-id="${task.id}" class="group task-item flex items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${isDone ? 'bg-slate-950/40 border-slate-900 opacity-60' : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 hover:shadow-md'}">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <button type="button" aria-label="Toggle completed" class="btn-toggle flex-shrink-0 w-6 h-6 rounded-lg border flex items-center justify-center transition ${isDone ? 'bg-emerald-500 border-emerald-400 text-slate-950' : 'border-slate-700 hover:border-cyan-400 bg-slate-900 text-transparent'}">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </button>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium ${isDone ? 'line-through text-slate-500' : 'text-slate-100'} truncate">${escapeHtml(task.title)}</div>
+                  <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                    ${getCategoryBadge(task.category)}
+                    ${getPriorityBadge(task.priority)}
+                    ${task.due ? `<span class="text-[11px] text-slate-400 font-mono-code">⏱️ ${escapeHtml(task.due)}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <button type="button" aria-label="Delete task" class="btn-delete opacity-0 group-hover:opacity-100 focus:opacity-100 text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 p-2 rounded-lg transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+      updateStats();
+    }
+
+    // Render Notebook Entries
+    function renderNotebook() {
+      const listEl = document.getElementById('notebook-list');
+      const emptyEl = document.getElementById('notebook-empty-state');
+
+      const filtered = notes.filter(note => {
+        if (currentNoteDisciplineFilter !== 'All' && note.discipline !== currentNoteDisciplineFilter) return false;
+        if (currentNoteSearch) {
+          const q = currentNoteSearch.toLowerCase();
+          const matchTitle = note.title.toLowerCase().includes(q);
+          const matchHypo = (note.hypothesis || '').toLowerCase().includes(q);
+          const matchContent = (note.content || '').toLowerCase().includes(q);
+          const matchConcl = (note.conclusion || '').toLowerCase().includes(q);
+          if (!matchTitle && !matchHypo && !matchContent && !matchConcl) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+      } else {
+        emptyEl.classList.add('hidden');
+        listEl.innerHTML = filtered.map(note => {
+          return `
+            <article data-id="${note.id}" class="note-card bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3.5 transition hover:border-slate-700">
+              <div class="flex flex-wrap items-start justify-between gap-2 border-b border-slate-800/80 pb-3">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    ${getDisciplineBadge(note.discipline)}
+                    <span class="text-[11px] text-slate-500 font-mono-code">${escapeHtml(note.timestamp)}</span>
+                  </div>
+                  <h4 class="text-base font-bold text-white tracking-tight">${escapeHtml(note.title)}</h4>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" class="btn-copy-note text-xs px-2.5 py-1 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white transition" title="Copy text">📋 Copy</button>
+                  <button type="button" class="btn-delete-note text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-950/30 transition" title="Delete entry"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                </div>
+              </div>
+              ${note.hypothesis ? `<div class="bg-indigo-950/20 border-l-2 border-indigo-500 pl-3 py-1"><div class="text-[10px] uppercase font-mono-code font-bold text-indigo-400">Hypothesis / Expected Outcome</div><div class="text-xs text-slate-300 mt-0.5">${escapeHtml(note.hypothesis)}</div></div>` : ''}
+              <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-800/80">
+                <div class="text-[10px] uppercase font-mono-code font-bold text-slate-400 mb-1">Bench Notes & Observations</div>
+                <pre class="text-xs text-slate-200 font-mono-code whitespace-pre-wrap leading-relaxed">${escapeHtml(note.content)}</pre>
+              </div>
+              ${note.conclusion ? `<div class="bg-emerald-950/20 border-l-2 border-emerald-500 pl-3 py-1"><div class="text-[10px] uppercase font-mono-code font-bold text-emerald-400">Conclusion & Key Findings</div><div class="text-xs text-slate-300 mt-0.5">${escapeHtml(note.conclusion)}</div></div>` : ''}
+              <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-900">
+                <span>Researcher: <strong class="text-slate-400 font-medium">${escapeHtml(note.author || userProfile.name)}</strong></span>
+                <span>${escapeHtml(note.lab || userProfile.lab)}</span>
+              </div>
+            </article>
+          `;
+        }).join('');
+      }
+      updateStats();
+    }
+
+    // Render Protocol Module
+    function renderProtocols() {
+      const activeProto = protocols.find(p => p.id === activeProtocolId) || protocols[0];
+      if (!activeProto) return;
+      activeProtocolId = activeProto.id;
+
+      document.getElementById('active-proto-title').textContent = activeProto.title;
+      document.getElementById('active-proto-time').textContent = `Est: ${activeProto.timeEst || 'Variable'}`;
+      document.getElementById('active-proto-badge').textContent = activeProto.discipline;
+
+      const totalSteps = activeProto.steps.length;
+      const completedSteps = activeProto.steps.filter(s => s.completed).length;
+      const pct = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
+      document.getElementById('proto-progress-text').textContent = `${completedSteps} of ${totalSteps} steps completed`;
+      document.getElementById('proto-progress-pct').textContent = `${pct}%`;
+      document.getElementById('proto-progress-bar').style.width = `${pct}%`;
+
+      const container = document.getElementById('proto-steps-container');
+      container.innerHTML = activeProto.steps.map((step, idx) => {
+        const isTimerRunning = (activeTimerStepIdx === idx && benchTimerInterval !== null);
+        const hasTimer = step.timerSeconds > 0;
+        const displaySecs = (activeTimerStepIdx === idx) ? activeTimerSecondsLeft : step.timerSeconds;
+
+        return `
+          <div data-step-idx="${idx}" class="proto-step-item p-3.5 rounded-xl border transition ${step.completed ? 'bg-slate-950/40 border-slate-900 opacity-60' : 'bg-slate-900/90 border-slate-800 hover:border-indigo-800/80'}">
+            <div class="flex items-start gap-3">
+              <button type="button" aria-label="Toggle step complete" class="btn-step-toggle mt-0.5 flex-shrink-0 w-6 h-6 rounded-lg border flex items-center justify-center transition ${step.completed ? 'bg-indigo-500 border-indigo-400 text-white' : 'border-slate-700 bg-slate-950 text-transparent hover:border-indigo-400'}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+              </button>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[11px] font-mono-code font-bold text-indigo-400">STEP ${idx + 1}</span>
+                  ${step.completed ? '<span class="text-[10px] text-emerald-400 font-mono-code">DONE</span>' : ''}
+                </div>
+                <div class="text-xs text-slate-200 leading-relaxed ${step.completed ? 'line-through text-slate-500' : ''}">${escapeHtml(step.text)}</div>
+                ${hasTimer ? `
+                  <div class="mt-2.5 flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-lg text-xs font-mono-code ${isTimerRunning ? 'text-indigo-400 border-indigo-500' : 'text-slate-300'}">
+                      <span>⏱️</span>
+                      <span class="timer-display font-bold">${formatTime(displaySecs)}</span>
+                    </div>
+                    <button type="button" class="btn-timer-toggle text-[11px] px-2.5 py-1 rounded-lg font-medium transition ${isTimerRunning ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-600 hover:text-white'}">
+                      ${isTimerRunning ? 'Pause ⏸️' : 'Start Timer ▶️'}
+                    </button>
+                    <button type="button" class="btn-timer-reset text-[11px] px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 transition">Reset ↺</button>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const libraryList = document.getElementById('protocol-library-list');
+      libraryList.innerHTML = protocols.map(p => {
+        const isCurrent = p.id === activeProtocolId;
+        return `
+          <div data-proto-id="${p.id}" class="proto-lib-card p-3.5 rounded-xl border transition ${isCurrent ? 'bg-indigo-950/30 border-indigo-500/60 shadow-lg' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+            <div class="flex items-start justify-between gap-2">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  ${getDisciplineBadge(p.discipline)}
+                  <span class="text-[11px] text-slate-400 font-mono-code">${p.steps.length} Steps</span>
+                  <span class="text-[11px] text-slate-400 font-mono-code">⏱️ ${escapeHtml(p.timeEst || 'N/A')}</span>
+                </div>
+                <h5 class="text-xs font-bold text-white">${escapeHtml(p.title)}</h5>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button type="button" class="btn-load-protocol text-xs px-2.5 py-1 rounded-lg ${isCurrent ? 'bg-indigo-500 text-white font-semibold' : 'bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'} transition">
+                  ${isCurrent ? 'Running ✓' : 'Run on Bench 🚀'}
+                </button>
+                ${protocols.length > 1 ? `
+                  <button type="button" class="btn-delete-protocol text-slate-500 hover:text-rose-400 p-1.5 rounded-lg transition" title="Delete protocol"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      updateStats();
+    }
+
+    // Render Solutions & Recipes
+    function renderRecipes() {
+      const activeRecipe = recipes.find(r => r.id === activeRecipeId) || recipes[0];
+      if (!activeRecipe) return;
+      activeRecipeId = activeRecipe.id;
+
+      document.getElementById('active-recipe-title').textContent = activeRecipe.title;
+      document.getElementById('active-recipe-desc').textContent = activeRecipe.description || '';
+      document.getElementById('active-recipe-ph').textContent = `Target pH: ${activeRecipe.ph || 'Unspecified'}`;
+      document.getElementById('active-recipe-storage').textContent = `Store: ${activeRecipe.storage || 'Room Temp'}`;
+      document.getElementById('active-recipe-sop').textContent = activeRecipe.sop || 'Prepare in distilled water and adjust pH.';
+      document.getElementById('table-vol-label').textContent = `${currentBatchVolume} mL`;
+
+      const scaleFactor = currentBatchVolume / 1000;
+      const tbody = document.getElementById('recipe-ingredients-body');
+      tbody.innerHTML = activeRecipe.ingredients.map(ing => {
+        const scaledVal = (ing.baseGrams * scaleFactor).toFixed(ing.unit === 'g' ? 3 : 2);
+        return `
+          <tr class="hover:bg-slate-900/40 transition">
+            <td class="py-2.5 px-3.5 font-sans font-medium text-slate-200">${escapeHtml(ing.name)}</td>
+            <td class="py-2.5 px-3.5 text-slate-400 text-[11px]">${escapeHtml(ing.mw || '—')}</td>
+            <td class="py-2.5 px-3.5 text-slate-300 text-[11px]">${escapeHtml(ing.conc || '—')}</td>
+            <td class="py-2.5 px-3.5 text-slate-400 text-[11px]">${ing.baseGrams} ${ing.unit}</td>
+            <td class="py-2.5 px-3.5 text-right font-bold text-cyan-300 bg-cyan-950/20">${scaledVal} ${ing.unit}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const libList = document.getElementById('recipe-library-list');
+      libList.innerHTML = recipes.map(r => {
+        const isCurrent = r.id === activeRecipeId;
+        return `
+          <div data-recipe-id="${r.id}" class="recipe-lib-card p-3.5 rounded-xl border transition ${isCurrent ? 'bg-cyan-950/30 border-cyan-500/60 shadow-lg' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+            <div class="flex items-start justify-between gap-2">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-mono-code px-2 py-0.5 rounded-md bg-slate-900 text-cyan-400 border border-slate-800">${escapeHtml(r.category || 'Reagent')}</span>
+                  <span class="text-[11px] text-slate-400 font-mono-code">${r.ingredients.length} Components</span>
+                  <span class="text-[11px] text-slate-400 font-mono-code">pH ${escapeHtml(r.ph || 'N/A')}</span>
+                </div>
+                <h5 class="text-xs font-bold text-white">${escapeHtml(r.title)}</h5>
+                <p class="text-[11px] text-slate-400 line-clamp-1">${escapeHtml(r.description || '')}</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button type="button" class="btn-load-recipe text-xs px-2.5 py-1 rounded-lg ${isCurrent ? 'bg-cyan-500 text-slate-950 font-semibold' : 'bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'} transition">
+                  ${isCurrent ? 'Viewing ✓' : 'Scale & Prepare ⚖️'}
+                </button>
+                ${recipes.length > 1 ? `
+                  <button type="button" class="btn-delete-recipe text-slate-500 hover:text-rose-400 p-1.5 rounded-lg transition" title="Delete recipe"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      updateStats();
+    }
+
+    // SCIENCE CALCULATORS ENGINE
+    function calculateDilution() {
+      const c1Val = parseFloat(document.getElementById('dil-c1').value);
+      const c1Unit = document.getElementById('dil-c1-unit').value;
+      const c2Val = parseFloat(document.getElementById('dil-c2').value);
+      const c2Unit = document.getElementById('dil-c2-unit').value;
+      const v2Val = parseFloat(document.getElementById('dil-v2').value);
+      const v2Unit = document.getElementById('dil-v2-unit').value;
+      const v1Unit = document.getElementById('dil-v1-unit').value;
+
+      if (isNaN(c1Val) || isNaN(c2Val) || isNaN(v2Val) || c1Val <= 0 || c2Val <= 0 || v2Val <= 0) {
+        document.getElementById('dil-v1').value = 'Invalid';
+        document.getElementById('dil-instruction-text').textContent = 'Please enter positive numbers for all dilution inputs.';
+        return;
+      }
+
+      const concScale = { 'M': 1, 'mM': 1e-3, 'uM': 1e-6, 'mg/mL': 1, '%': 1, 'X': 1 };
+      const c1Base = c1Val * (concScale[c1Unit] || 1);
+      const c2Base = c2Val * (concScale[c2Unit] || 1);
+
+      if (c1Base < c2Base) {
+        document.getElementById('dil-v1').value = 'C1 must be > C2';
+        document.getElementById('dil-instruction-text').textContent = 'Stock concentration C₁ must be higher than final working concentration C₂!';
+        return;
+      }
+
+      const volScale = { 'uL': 1e-3, 'mL': 1, 'L': 1000 };
+      const v2InML = v2Val * (volScale[v2Unit] || 1);
+      const v1InML = (c2Base * v2InML) / c1Base;
+      const v1Display = (v1Unit === 'uL') ? (v1InML * 1000) : v1InML;
+      const v1Formatted = v1Display < 0.1 ? v1Display.toFixed(3) : v1Display.toFixed(2);
+      document.getElementById('dil-v1').value = `${v1Formatted} ${v1Unit}`;
+
+      const diluentInML = v2InML - v1InML;
+      const diluentDisplay = (v2Unit === 'uL') ? (diluentInML * 1000) : diluentInML;
+      const diluentFormatted = diluentDisplay < 0.1 ? diluentDisplay.toFixed(3) : diluentDisplay.toFixed(2);
+
+      document.getElementById('dil-instruction-text').textContent = 
+        `Pipette ${v1Formatted} ${v1Unit} of Stock into ${diluentFormatted} ${v2Unit} Buffer/dH₂O (Total Volume: ${v2Val} ${v2Unit})`;
+    }
+
+    function calculateMolarity() {
+      const conc = parseFloat(document.getElementById('mol-conc').value);
+      const concUnit = document.getElementById('mol-conc-unit').value;
+      const vol = parseFloat(document.getElementById('mol-vol').value);
+      const volUnit = document.getElementById('mol-vol-unit').value;
+      const mw = parseFloat(document.getElementById('mol-mw').value);
+
+      if (isNaN(conc) || isNaN(vol) || isNaN(mw) || conc <= 0 || vol <= 0 || mw <= 0) {
+        document.getElementById('mol-result-mass').textContent = 'Invalid inputs';
+        document.getElementById('mol-result-formula').textContent = 'Enter positive concentration, volume, and molecular weight.';
+        return;
+      }
+
+      const concInM = (concUnit === 'M') ? conc : (concUnit === 'mM') ? conc * 1e-3 : conc * 1e-6;
+      const volInL = (volUnit === 'L') ? vol : (volUnit === 'mL') ? vol * 1e-3 : vol * 1e-6;
+      const massGrams = concInM * volInL * mw;
+      const massMg = massGrams * 1000;
+
+      const gFormatted = massGrams < 0.001 ? massGrams.toExponential(3) : massGrams.toFixed(3);
+      const mgFormatted = massMg.toFixed(2);
+
+      document.getElementById('mol-result-mass').innerHTML = `${gFormatted} g <span class="text-sm font-normal text-slate-400">(${mgFormatted} mg)</span>`;
+      document.getElementById('mol-result-formula').textContent = `= ${concInM.toFixed(4)} mol/L × ${volInL.toFixed(3)} L × ${mw} g/mol`;
+    }
+
+    // FAILED EXPERIMENT LOG ENGINE (STEP 6)
+    function renderFailures() {
+      const listEl = document.getElementById('failure-list');
+      const emptyEl = document.getElementById('failure-empty-state');
+
+      const filtered = failures.filter(f => {
+        if (currentFailCategoryFilter !== 'All' && f.category !== currentFailCategoryFilter) return false;
+        if (currentFailSearch) {
+          const q = currentFailSearch.toLowerCase();
+          const matchTitle = f.title.toLowerCase().includes(q);
+          const matchRoot = f.rootCause.toLowerCase().includes(q);
+          const matchLesson = (f.lesson || '').toLowerCase().includes(q);
+          const matchObs = (f.observed || '').toLowerCase().includes(q);
+          if (!matchTitle && !matchRoot && !matchLesson && !matchObs) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+      } else {
+        emptyEl.classList.add('hidden');
+        listEl.innerHTML = filtered.map(f => {
+          return `
+            <article data-id="${f.id}" class="fail-card bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3.5 transition hover:border-rose-900/60">
+              <div class="flex flex-wrap items-start justify-between gap-2 border-b border-slate-800/80 pb-3">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    ${getFailureBadge(f.category)}
+                    <span class="text-[11px] text-slate-500 font-mono-code">${escapeHtml(f.date)}</span>
+                  </div>
+                  <h4 class="text-base font-bold text-white tracking-tight">${escapeHtml(f.title)}</h4>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <button type="button" class="btn-retry-task text-xs px-2.5 py-1 rounded-lg bg-rose-950/60 border border-rose-800/80 hover:bg-rose-900 text-rose-300 transition flex items-center gap-1">
+                    <span>🔄 Plan Retry</span>
+                  </button>
+                  <button type="button" class="btn-delete-failure text-slate-500 hover:text-rose-400 p-1.5 rounded-lg transition" title="Delete log">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Outcome Comparison -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                ${f.expected ? `
+                  <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                    <span class="text-[10px] font-mono-code font-bold uppercase text-slate-400">Hypothesized Expectation:</span>
+                    <p class="text-slate-300 mt-1">${escapeHtml(f.expected)}</p>
+                  </div>
+                ` : ''}
+                <div class="p-2.5 rounded-xl bg-rose-950/20 border border-rose-900/40">
+                  <span class="text-[10px] font-mono-code font-bold uppercase text-rose-400">Observed Negative Outcome:</span>
+                  <p class="text-rose-200 font-medium mt-1">${escapeHtml(f.observed)}</p>
+                </div>
+              </div>
+
+              <!-- Root cause analysis -->
+              <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                <span class="text-[10px] font-mono-code font-bold uppercase text-amber-400">Root Cause Diagnostics:</span>
+                <p class="text-xs text-slate-200 mt-1 font-mono-code leading-relaxed whitespace-pre-wrap">${escapeHtml(f.rootCause)}</p>
+              </div>
+
+              <!-- Lesson Learned -->
+              ${f.lesson ? `
+                <div class="bg-emerald-950/20 border-l-2 border-emerald-500 pl-3 py-1.5">
+                  <span class="text-[10px] uppercase font-mono-code font-bold text-emerald-400">Key Scientific Takeaway & Corrective Action:</span>
+                  <div class="text-xs text-slate-300 mt-0.5">${escapeHtml(f.lesson)}</div>
+                </div>
+              ` : ''}
+            </article>
+          `;
+        }).join('');
+      }
+
+      updateStats();
+    }
+
+    // Setup Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      renderTasks();
+      renderNotebook();
+      renderProtocols();
+      renderRecipes();
+      renderFailures();
+      calculateDilution();
+      calculateMolarity();
+
+      // Tab switcher elements
+      const navTasks = document.getElementById('nav-tasks');
+      const navNotebook = document.getElementById('nav-notebook');
+      const navProtocols = document.getElementById('nav-protocols');
+      const navRecipes = document.getElementById('nav-recipes');
+      const navCalc = document.getElementById('nav-calc');
+      const navFailures = document.getElementById('nav-failures');
+
+      const viewTasks = document.getElementById('view-tasks');
+      const viewNotebook = document.getElementById('view-notebook');
+      const viewProtocols = document.getElementById('view-protocols');
+      const viewRecipes = document.getElementById('view-recipes');
+      const viewCalc = document.getElementById('view-calc');
+      const viewFailures = document.getElementById('view-failures');
+
+      function clearTabStyles() {
+        [navTasks, navNotebook, navProtocols, navRecipes, navCalc, navFailures].forEach(btn => {
+          btn.className = 'tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 flex items-center gap-1.5 whitespace-nowrap';
+        });
+      }
+
+      function switchView(target) {
+        viewTasks.classList.add('hidden');
+        viewNotebook.classList.add('hidden');
+        viewProtocols.classList.add('hidden');
+        viewRecipes.classList.add('hidden');
+        viewCalc.classList.add('hidden');
+        viewFailures.classList.add('hidden');
+        clearTabStyles();
+
+        if (target === 'tasks') {
+          viewTasks.classList.remove('hidden');
+          navTasks.className = 'tab-btn px-3 py-1.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 whitespace-nowrap';
+          renderTasks();
+        } else if (target === 'notebook') {
+          viewNotebook.classList.remove('hidden');
+          navNotebook.className = 'tab-btn px-3 py-1.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 whitespace-nowrap';
+          renderNotebook();
+        } else if (target === 'protocols') {
+          viewProtocols.classList.remove('hidden');
+          navProtocols.className = 'tab-btn px-3 py-1.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1.5 whitespace-nowrap';
+          renderProtocols();
+        } else if (target === 'recipes') {
+          viewRecipes.classList.remove('hidden');
+          navRecipes.className = 'tab-btn px-3 py-1.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 whitespace-nowrap';
+          renderRecipes();
+        } else if (target === 'calc') {
+          viewCalc.classList.remove('hidden');
+          navCalc.className = 'tab-btn px-3 py-1.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 whitespace-nowrap';
+          calculateDilution();
+          calculateMolarity();
+        } else if (target === 'failures') {
+          viewFailures.classList.remove('hidden');
+          navFailures.className = 'tab-btn px-3 py-1.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 whitespace-nowrap';
+          renderFailures();
+        }
+      }
+
+      navTasks.addEventListener('click', () => switchView('tasks'));
+      navNotebook.addEventListener('click', () => switchView('notebook'));
+      navProtocols.addEventListener('click', () => switchView('protocols'));
+      navRecipes.addEventListener('click', () => switchView('recipes'));
+      navCalc.addEventListener('click', () => switchView('calc'));
+      navFailures.addEventListener('click', () => switchView('failures'));
+
+      // Failure form submit
+      const failForm = document.getElementById('failure-form');
+      failForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('fail-title').value.trim();
+        const category = document.getElementById('fail-category').value;
+        const expected = document.getElementById('fail-expected').value.trim();
+        const observed = document.getElementById('fail-observed').value.trim();
+        const rootCause = document.getElementById('fail-root-cause').value.trim();
+        const lesson = document.getElementById('fail-lesson').value.trim();
+        const autoTask = document.getElementById('fail-add-retry-task').checked;
+
+        if (!title || !observed || !rootCause) return;
+
+        const newFailure = {
+          id: 'fail-' + Date.now(),
+          title,
+          category,
+          expected,
+          observed,
+          rootCause,
+          lesson,
+          date: new Date().toLocaleDateString()
+        };
+
+        failures.unshift(newFailure);
+        saveFailures();
+
+        // Optionally add retry task to queue
+        if (autoTask) {
+          const taskDesc = lesson ? `Retry: ${title} (${lesson})` : `Retry & troubleshoot: ${title}`;
+          tasks.unshift({
+            id: 'task-' + Date.now(),
+            title: taskDesc,
+            category: 'Benchwork',
+            priority: 'High',
+            due: 'Remediation',
+            completed: false,
+            createdAt: Date.now()
+          });
+          saveTasks();
+        }
+
+        renderFailures();
+        showToast(autoTask ? 'Failure logged & retry task added to queue!' : 'Failure recorded in logbook!', '💥');
+        failForm.reset();
+        document.getElementById('fail-title').focus();
+      });
+
+      // Failure list interactions (delete & plan retry)
+      document.getElementById('failure-list').addEventListener('click', (e) => {
+        const card = e.target.closest('.fail-card');
+        if (!card) return;
+        const id = card.getAttribute('data-id');
+        const failItem = failures.find(f => f.id === id);
+        if (!failItem) return;
+
+        // Delete
+        if (e.target.closest('.btn-delete-failure')) {
+          failures = failures.filter(f => f.id !== id);
+          saveFailures();
+          renderFailures();
+          showToast('Anomalous entry removed', '🗑️');
+        }
+
+        // Retry Task
+        if (e.target.closest('.btn-retry-task')) {
+          const taskDesc = failItem.lesson ? `Retry ${failItem.title} (${failItem.lesson})` : `Repeat with fresh reagents: ${failItem.title}`;
+          tasks.unshift({
+            id: 'task-' + Date.now(),
+            title: taskDesc,
+            category: 'Benchwork',
+            priority: 'High',
+            due: 'Repeat Assay',
+            completed: false,
+            createdAt: Date.now()
+          });
+          saveTasks();
+          renderTasks();
+          showToast('Retry experiment added to Lab Queue!', '🔄');
+          switchView('tasks');
+        }
+      });
+
+      // Failure filters
+      document.getElementById('search-failures').addEventListener('input', (e) => {
+        currentFailSearch = e.target.value.trim();
+        renderFailures();
+      });
+      document.getElementById('filter-fail-cat').addEventListener('change', (e) => {
+        currentFailCategoryFilter = e.target.value;
+        renderFailures();
+      });
+
+      // Calculator Sub-Tabs
+      const calcTabDil = document.getElementById('calc-tab-dilution');
+      const calcTabMol = document.getElementById('calc-tab-molarity');
+      const calcTabConv = document.getElementById('calc-tab-converter');
+      const calcSubDil = document.getElementById('calc-sub-dilution');
+      const calcSubMol = document.getElementById('calc-sub-molarity');
+      const calcSubConv = document.getElementById('calc-sub-converter');
+
+      function switchCalcTab(tab) {
+        [calcSubDil, calcSubMol, calcSubConv].forEach(el => el.classList.add('hidden'));
+        [calcTabDil, calcTabMol, calcTabConv].forEach(el => {
+          el.className = 'flex-1 py-2 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition flex items-center justify-center gap-1.5';
+        });
+
+        if (tab === 'dilution') {
+          calcSubDil.classList.remove('hidden');
+          calcTabDil.className = 'flex-1 py-2 px-3 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold transition flex items-center justify-center gap-1.5';
+          calculateDilution();
+        } else if (tab === 'molarity') {
+          calcSubMol.classList.remove('hidden');
+          calcTabMol.className = 'flex-1 py-2 px-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold transition flex items-center justify-center gap-1.5';
+          calculateMolarity();
+        } else if (tab === 'converter') {
+          calcSubConv.classList.remove('hidden');
+          calcTabConv.className = 'flex-1 py-2 px-3 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 font-semibold transition flex items-center justify-center gap-1.5';
+        }
+      }
+
+      calcTabDil.addEventListener('click', () => switchCalcTab('dilution'));
+      calcTabMol.addEventListener('click', () => switchCalcTab('molarity'));
+      calcTabConv.addEventListener('click', () => switchCalcTab('converter'));
+
+      ['dil-c1', 'dil-c1-unit', 'dil-c2', 'dil-c2-unit', 'dil-v2', 'dil-v2-unit', 'dil-v1-unit'].forEach(id => {
+        document.getElementById(id).addEventListener('input', calculateDilution);
+        document.getElementById(id).addEventListener('change', calculateDilution);
+      });
+
+      ['mol-conc', 'mol-conc-unit', 'mol-vol', 'mol-vol-unit', 'mol-mw'].forEach(id => {
+        document.getElementById(id).addEventListener('input', calculateMolarity);
+        document.getElementById(id).addEventListener('change', calculateMolarity);
+      });
+
+      document.querySelectorAll('.btn-mw-fill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mw = btn.getAttribute('data-mw');
+          document.getElementById('mol-mw').value = mw;
+          calculateMolarity();
+          showToast(`Filled MW for ${btn.getAttribute('data-name')} (${mw})`, '⚖️');
+        });
+      });
+
+      const convVolUl = document.getElementById('conv-vol-ul');
+      const convVolMl = document.getElementById('conv-vol-ml');
+      convVolUl.addEventListener('input', () => { convVolMl.value = (parseFloat(convVolUl.value) / 1000) || 0; });
+      convVolMl.addEventListener('input', () => { convVolUl.value = (parseFloat(convVolMl.value) * 1000) || 0; });
+
+      const convConcMm = document.getElementById('conv-conc-mm');
+      const convConcUm = document.getElementById('conv-conc-um');
+      convConcMm.addEventListener('input', () => { convConcUm.value = (parseFloat(convConcMm.value) * 1000) || 0; });
+      convConcUm.addEventListener('input', () => { convConcMm.value = (parseFloat(convConcUm.value) / 1000) || 0; });
+
+      const convYieldNg = document.getElementById('conv-yield-ng');
+      const convYieldUg = document.getElementById('conv-yield-ug');
+      convYieldNg.addEventListener('input', () => { convYieldUg.value = (parseFloat(convYieldNg.value) / 1000) || 0; });
+      convYieldUg.addEventListener('input', () => { convYieldUg.value = (parseFloat(convYieldUg.value) * 1000) || 0; });
+
+      document.getElementById('btn-dil-to-task').addEventListener('click', () => {
+        const text = document.getElementById('dil-instruction-text').textContent;
+        tasks.unshift({
+          id: 'task-' + Date.now(),
+          title: text,
+          category: 'Solution',
+          priority: 'High',
+          due: 'Dilution',
+          completed: false,
+          createdAt: Date.now()
+        });
+        saveTasks(); renderTasks(); showToast('Dilution task added to Lab Queue!', '💧'); switchView('tasks');
+      });
+
+      document.getElementById('btn-dil-copy').addEventListener('click', () => {
+        const text = document.getElementById('dil-instruction-text').textContent;
+        try { navigator.clipboard.writeText(text).then(() => showToast('Dilution protocol copied!', '📋')); } catch(e){}
+      });
+
+      document.getElementById('btn-mol-to-task').addEventListener('click', () => {
+        const massText = document.getElementById('mol-result-mass').textContent;
+        const formula = document.getElementById('mol-result-formula').textContent;
+        tasks.unshift({
+          id: 'task-' + Date.now(),
+          title: `Weigh ${massText.split('(')[0].trim()} on balance (${formula.replace('=', '').trim()})`,
+          category: 'Solution',
+          priority: 'Medium',
+          due: 'Weighing',
+          completed: false,
+          createdAt: Date.now()
+        });
+        saveTasks(); renderTasks(); showToast('Weighing task added to Lab Queue!', '⚖️'); switchView('tasks');
+      });
+
+      document.getElementById('btn-mol-copy').addEventListener('click', () => {
+        const mass = document.getElementById('mol-result-mass').textContent;
+        const formula = document.getElementById('mol-result-formula').textContent;
+        try { navigator.clipboard.writeText(`MASS TO WEIGH: ${mass}\nCALCULATION: ${formula}`).then(() => showToast('Molarity math copied!', '📋')); } catch(e){}
+      });
+
+      // Recipe & Protocol Listeners (Preserved)
+      document.querySelectorAll('.btn-vol-preset').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.btn-vol-preset').forEach(b => {
+            b.className = 'btn-vol-preset px-2.5 py-1 rounded-lg text-slate-400 hover:text-white';
+          });
+          btn.className = 'btn-vol-preset px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold';
+          currentBatchVolume = parseInt(btn.getAttribute('data-vol'), 10);
+          document.getElementById('input-custom-volume').value = currentBatchVolume;
+          renderRecipes();
+        });
+      });
+
+      document.getElementById('input-custom-volume').addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (val && val > 0) { currentBatchVolume = val; renderRecipes(); }
+      });
+
+      document.getElementById('recipe-library-list').addEventListener('click', (e) => {
+        const card = e.target.closest('.recipe-lib-card');
+        if (!card) return;
+        const id = card.getAttribute('data-recipe-id');
+        if (e.target.closest('.btn-load-recipe')) { activeRecipeId = id; renderRecipes(); showToast('Recipe loaded! ⚖️', '🧪'); }
+        if (e.target.closest('.btn-delete-recipe')) {
+          if (recipes.length <= 1) { showToast('Keep at least 1 recipe', '⚠️'); return; }
+          recipes = recipes.filter(r => r.id !== id);
+          if (activeRecipeId === id) activeRecipeId = recipes[0].id;
+          saveRecipes(); renderRecipes(); showToast('Recipe removed', '🗑️');
+        }
+      });
+
+      document.getElementById('btn-recipe-to-task').addEventListener('click', () => {
+        const r = recipes.find(x => x.id === activeRecipeId);
+        if (!r) return;
+        tasks.unshift({
+          id: 'task-' + Date.now(),
+          title: `Prepare ${currentBatchVolume} mL of ${r.title} (${r.ph || 'standard pH'})`,
+          category: 'Solution',
+          priority: 'High',
+          due: 'Benchwork',
+          completed: false,
+          createdAt: Date.now()
+        });
+        saveTasks(); renderTasks(); showToast('Buffer task added!', '🚀'); switchView('tasks');
+      });
+
+      document.getElementById('btn-copy-recipe').addEventListener('click', () => {
+        const r = recipes.find(x => x.id === activeRecipeId);
+        if (!r) return;
+        const scale = currentBatchVolume / 1000;
+        let text = `RECIPE: ${r.title}\nBATCH VOLUME: ${currentBatchVolume} mL\nSTORAGE: ${r.storage}\npH: ${r.ph}\n\nINGREDIENTS TO WEIGH:\n`;
+        r.ingredients.forEach(i => {
+          const scaled = (i.baseGrams * scale).toFixed(i.unit === 'g' ? 3 : 2);
+          text += `- ${i.name}: ${scaled} ${i.unit} (${i.conc})\n`;
+        });
+        text += `\nPREPARATION SOP:\n${r.sop}`;
+        try { navigator.clipboard.writeText(text).then(() => showToast('Recipe copied!', '📋')); } catch(e){}
+      });
+
+      const newRecForm = document.getElementById('new-recipe-form');
+      newRecForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('custom-rec-title').value.trim();
+        const ph = document.getElementById('custom-rec-ph').value.trim() || 'N/A';
+        const storage = document.getElementById('custom-rec-storage').value;
+        const rawIngredients = document.getElementById('custom-rec-ingredients').value.trim().split('\n').filter(s => s.trim().length > 0);
+        const sop = document.getElementById('custom-rec-sop').value.trim();
+        if (!title || rawIngredients.length === 0) return;
+
+        const parsed = rawIngredients.map(line => {
+          const parts = line.split('|').map(p => p.trim());
+          const name = parts[0] || 'Chemical';
+          const mw = parts[1] || '—';
+          const conc = parts[2] || '—';
+          const rawAmt = parts[3] || '1.0 g';
+          const numMatch = rawAmt.match(/([\d\.]+)\s*(g|mL|mg|µL)?/i);
+          return { name, mw, conc, baseGrams: numMatch ? parseFloat(numMatch[1]) : 1.0, unit: (numMatch && numMatch[2]) ? numMatch[2] : 'g' };
+        });
+
+        recipes.push({ id: 'r-' + Date.now(), title, category: 'Custom Solution', ph, storage, description: `Custom lab reagent formula (${parsed.length} components).`, sop, ingredients: parsed });
+        activeRecipeId = recipes[recipes.length - 1].id;
+        saveRecipes(); renderRecipes(); showToast('New recipe saved! 🧪', '✨');
+        newRecForm.reset();
+      });
+
+      // Protocol Runner Step Interactions
+      const protoStepsContainer = document.getElementById('proto-steps-container');
+      protoStepsContainer.addEventListener('click', (e) => {
+        const stepEl = e.target.closest('.proto-step-item');
+        if (!stepEl) return;
+        const idx = parseInt(stepEl.getAttribute('data-step-idx'), 10);
+        const activeProto = protocols.find(p => p.id === activeProtocolId);
+        if (!activeProto || !activeProto.steps[idx]) return;
+
+        if (e.target.closest('.btn-step-toggle')) {
+          activeProto.steps[idx].completed = !activeProto.steps[idx].completed;
+          saveProtocols(); renderProtocols();
+          showToast(activeProto.steps[idx].completed ? `Step ${idx + 1} completed!` : `Step ${idx + 1} marked pending`, '📑');
+        }
+
+        if (e.target.closest('.btn-timer-toggle')) {
+          if (benchTimerInterval && activeTimerStepIdx === idx) {
+            stopBenchTimer(); renderProtocols(); showToast('Timer paused', '⏸️');
+          } else {
+            const secsToRun = (activeTimerStepIdx === idx && activeTimerSecondsLeft > 0) ? activeTimerSecondsLeft : activeProto.steps[idx].timerSeconds;
+            startBenchTimer(idx, secsToRun); showToast(`Timer started for Step ${idx + 1}`, '⏱️');
+          }
+        }
+
+        if (e.target.closest('.btn-timer-reset')) {
+          if (activeTimerStepIdx === idx) { stopBenchTimer(); activeTimerSecondsLeft = activeProto.steps[idx].timerSeconds; }
+          renderProtocols(); showToast(`Timer reset for Step ${idx + 1}`, '↺');
+        }
+      });
+
+      const protoLibraryList = document.getElementById('protocol-library-list');
+      protoLibraryList.addEventListener('click', (e) => {
+        const card = e.target.closest('.proto-lib-card');
+        if (!card) return;
+        const id = card.getAttribute('data-proto-id');
+        if (e.target.closest('.btn-load-protocol')) { activeProtocolId = id; stopBenchTimer(); renderProtocols(); showToast('Protocol loaded! 🔬', '🚀'); }
+        if (e.target.closest('.btn-delete-protocol')) {
+          if (protocols.length <= 1) { showToast('Keep at least 1 protocol', '⚠️'); return; }
+          protocols = protocols.filter(p => p.id !== id);
+          if (activeProtocolId === id) activeProtocolId = protocols[0].id;
+          saveProtocols(); renderProtocols(); showToast('Protocol removed', '🗑️');
+        }
+      });
+
+      document.getElementById('btn-reset-protocol').addEventListener('click', () => {
+        const activeProto = protocols.find(p => p.id === activeProtocolId);
+        if (activeProto) { activeProto.steps.forEach(s => s.completed = false); stopBenchTimer(); saveProtocols(); renderProtocols(); showToast('Protocol reset', '🔄'); }
+      });
+
+      document.getElementById('btn-log-protocol-done').addEventListener('click', () => {
+        const activeProto = protocols.find(p => p.id === activeProtocolId);
+        if (!activeProto) return;
+        const completedCount = activeProto.steps.filter(s => s.completed).length;
+        const totalCount = activeProto.steps.length;
+        notes.unshift({
+          id: 'note-' + Date.now(),
+          title: `Protocol Execution: ${activeProto.title}`,
+          discipline: activeProto.discipline || 'General',
+          author: userProfile.name,
+          lab: userProfile.lab,
+          hypothesis: `Execute standard protocol (${activeProto.title}) with nominal yields.`,
+          content: `Standard Operating Procedure executed at bench.\nCompleted ${completedCount} of ${totalCount} steps.\n\n` + activeProto.steps.map((s, i) => `${s.completed ? '✓' : '—'} Step ${i+1}: ${s.text}`).join('\n'),
+          conclusion: completedCount === totalCount ? 'All protocol steps checked off sequentially.' : `Protocol partially executed (${completedCount}/${totalCount} steps).`,
+          timestamp: new Date().toLocaleString()
+        });
+        saveNotes(); renderNotebook(); showToast('Logged to Notebook! 📓', '🎉'); switchView('notebook');
+      });
+
+      const newProtoForm = document.getElementById('new-protocol-form');
+      newProtoForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('custom-proto-title').value.trim();
+        const field = document.getElementById('custom-proto-field').value;
+        const timeEst = document.getElementById('custom-proto-time').value.trim() || 'Variable';
+        const rawSteps = document.getElementById('custom-proto-steps').value.trim().split('\n').filter(s => s.trim().length > 0);
+        if (!title || rawSteps.length === 0) return;
+
+        const parsedSteps = rawSteps.map(stepText => {
+          let timerSecs = 0;
+          const timerMatch = stepText.match(/\[(\d+)(s|m|min)\]/i);
+          if (timerMatch) {
+            const val = parseInt(timerMatch[1], 10);
+            timerSecs = (timerMatch[2].toLowerCase() === 's') ? val : val * 60;
+          }
+          return { text: stepText, timerSeconds: timerSecs, completed: false };
+        });
+
+        protocols.push({ id: 'p-' + Date.now(), title, discipline: field, timeEst, steps: parsedSteps });
+        activeProtocolId = protocols[protocols.length - 1].id;
+        saveProtocols(); renderProtocols(); showToast('Protocol saved! 📚', '✨');
+        newProtoForm.reset();
+      });
+
+      // Profile edit
+      document.getElementById('btn-edit-profile').addEventListener('click', () => {
+        document.getElementById('profile-edit-panel').classList.toggle('hidden');
+      });
+      document.getElementById('btn-save-profile').addEventListener('click', () => {
+        userProfile.name = document.getElementById('input-profile-name').value.trim() || 'Student Researcher';
+        userProfile.lab = document.getElementById('input-profile-lab').value.trim() || 'Laboratory';
+        saveProfile(); applyProfileUI(); document.getElementById('profile-edit-panel').classList.add('hidden');
+        showToast('Profile updated!', '🔬');
+      });
+
+      document.querySelectorAll('.btn-insert-symbol').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const sym = e.target.getAttribute('data-sym');
+          const textarea = document.getElementById('note-content');
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          textarea.value = textarea.value.substring(0, start) + sym + textarea.value.substring(end);
+          textarea.focus();
+          textarea.selectionStart = textarea.selectionEnd = start + sym.length;
+        });
+      });
+
+      const noteForm = document.getElementById('notebook-form');
+      noteForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('note-title').value.trim();
+        const discipline = document.getElementById('note-discipline').value;
+        const hypothesis = document.getElementById('note-hypothesis').value.trim();
+        const content = document.getElementById('note-content').value.trim();
+        const conclusion = document.getElementById('note-conclusion').value.trim();
+        if (!title || !content) return;
+
+        notes.unshift({ id: 'note-' + Date.now(), title, discipline, author: userProfile.name, lab: userProfile.lab, hypothesis, content, conclusion, timestamp: new Date().toLocaleString() });
+        saveNotes(); renderNotebook(); showToast('Notebook entry saved!', '📓');
+        noteForm.reset(); document.getElementById('note-title').focus();
+      });
+
+      document.getElementById('notebook-list').addEventListener('click', (e) => {
+        const card = e.target.closest('.note-card');
+        if (!card) return;
+        const id = card.getAttribute('data-id');
+        const note = notes.find(n => n.id === id);
+        if (!note) return;
+        if (e.target.closest('.btn-delete-note')) { notes = notes.filter(n => n.id !== id); saveNotes(); renderNotebook(); showToast('Entry deleted', '🗑️'); }
+        if (e.target.closest('.btn-copy-note')) {
+          const exportText = `EXPT: ${note.title}\nFIELD: ${note.discipline}\nDATE: ${note.timestamp}\n\nHYPOTHESIS:\n${note.hypothesis || 'N/A'}\n\nOBSERVATIONS:\n${note.content}\n\nCONCLUSION:\n${note.conclusion || 'N/A'}`;
+          try { navigator.clipboard.writeText(exportText).then(() => showToast('Copied to clipboard!', '📋')); } catch(err){}
+        }
+      });
+
+      document.getElementById('search-notes').addEventListener('input', (e) => { currentNoteSearch = e.target.value.trim(); renderNotebook(); });
+      document.getElementById('filter-discipline').addEventListener('change', (e) => { currentNoteDisciplineFilter = e.target.value; renderNotebook(); });
+
+      // Task actions
+      const taskForm = document.getElementById('task-form');
+      taskForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('task-title').value.trim();
+        if (!title) return;
+        tasks.unshift({
+          id: 'task-' + Date.now(),
+          title,
+          category: document.getElementById('task-category').value,
+          priority: document.getElementById('task-priority').value,
+          due: document.getElementById('task-due').value.trim(),
+          completed: false,
+          createdAt: Date.now()
+        });
+        saveTasks(); renderTasks(); showToast('Task added to queue!', '🧪');
+        document.getElementById('task-title').value = '';
+        document.getElementById('task-due').value = '';
+        document.getElementById('task-title').focus();
+      });
+
+      document.getElementById('task-list').addEventListener('click', (e) => {
+        const itemEl = e.target.closest('.task-item');
+        if (!itemEl) return;
+        const id = itemEl.getAttribute('data-id');
+        if (e.target.closest('.btn-toggle')) {
+          const task = tasks.find(t => t.id === id);
+          if (task) { task.completed = !task.completed; saveTasks(); renderTasks(); showToast(task.completed ? 'Checked off!' : 'Marked active', task.completed ? '✅' : '🔄'); }
+        }
+        if (e.target.closest('.btn-delete')) {
+          tasks = tasks.filter(t => t.id !== id); saveTasks(); renderTasks(); showToast('Task removed', '🗑️');
+        }
+      });
+
+      const btnAll = document.getElementById('filter-all');
+      const btnActive = document.getElementById('filter-active');
+      const btnCompleted = document.getElementById('filter-completed');
+      const filterBtns = [btnAll, btnActive, btnCompleted];
+      function setActiveFilterBtn(activeBtn) {
+        filterBtns.forEach(btn => btn.className = 'filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800');
+        activeBtn.className = 'filter-btn px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-medium';
+      }
+      btnAll.addEventListener('click', () => { currentFilter = 'all'; setActiveFilterBtn(btnAll); renderTasks(); });
+      btnActive.addEventListener('click', () => { currentFilter = 'active'; setActiveFilterBtn(btnActive); renderTasks(); });
+      btnCompleted.addEventListener('click', () => { currentFilter = 'completed'; setActiveFilterBtn(btnCompleted); renderTasks(); });
+
+      document.getElementById('filter-category').addEventListener('change', (e) => { currentCategoryFilter = e.target.value; renderTasks(); });
+      document.getElementById('btn-clear-done').addEventListener('click', () => {
+        const count = tasks.filter(t => t.completed).length;
+        if (count === 0) { showToast('No completed tasks', 'ℹ️'); return; }
+        tasks = tasks.filter(t => !t.completed); saveTasks(); renderTasks(); showToast(`Cleared ${count} task(s)`, '🧹');
+      });
+    });
+  </script>
+</body>
+</html>
